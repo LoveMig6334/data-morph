@@ -1,0 +1,8 @@
+{
+  "use_case": "uc1_csv_to_json_nested",
+  "complexity": "simple",
+  "input_format": "csv",
+  "output_format": "json",
+  "description": "Flat product CSV with product_* and category_* columns -> nested JSON objects per row",
+  "prompt_hint": "Each row becomes one JSON object with 'product' and 'category' sub-objects based on column prefix."
+}

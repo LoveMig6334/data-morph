@@ -1,0 +1,52 @@
+{
+  "run_id": "baseline_2026-04-17_192142",
+  "generated_at": "2026-04-17T19:21:53",
+  "teacher": "claude -p --model opus (Claude Code subscription)",
+  "aggregate": {
+    "overall": {
+      "format_validity": 1.0,
+      "schema_compliance": 0.0,
+      "loadability": 1.0,
+      "content_accuracy": 0.0
+    },
+    "by_use_case": {
+      "uc1_csv_to_json_nested": {
+        "n": 1,
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.0
+      }
+    },
+    "by_complexity": {
+      "medium": {
+        "n": 1,
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.0
+      }
+    },
+    "n_cases": 1,
+    "n_teacher_errors": 0
+  },
+  "cases": [
+    {
+      "case_id": "uc1_csv_to_json_nested/medium_01",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 10.8,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.0
+      },
+      "output_preview": "[\n  {\n    \"user_name\": \"Alice\",\n    \"user_email\": \"alice@example.com\",\n    \"orders\": [\n      {\n        \"order_id\": 1001,\n        \"order_item\": \"Widget\",\n        \"order_price\": 9.99\n      },\n      {\n  "
+    }
+  ]
+}

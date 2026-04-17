@@ -1,0 +1,10 @@
+{
+  "use_case": "uc4_csv_to_txt_report",
+  "complexity": "medium",
+  "input_format": "csv",
+  "output_format": "txt",
+  "description": "Inventory CSV -> TXT report with per-category value totals and grand total",
+  "prompt_hint": "Produce an 'Inventory Report' listing all 5 products. Compute per-category inventory value (qty*unit_price): Hardware=150*9.99+200*4.50+100*2.25=2623.50, Electronics=75*19.99+25*29.99=2249.50. Total = 4873.00.",
+  "content_accuracy_mode": "txt_substring",
+  "required_substrings": ["Inventory Report", "Widget", "Gadget", "Sprocket", "Doohickey", "Thingamajig", "2623.50", "2249.50", "4873.00"]
+}

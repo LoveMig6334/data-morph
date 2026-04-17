@@ -1,0 +1,8 @@
+{
+  "use_case": "uc5_schema_migration",
+  "complexity": "simple",
+  "input_format": "json",
+  "output_format": "json",
+  "description": "Rename legacy user_* fields to new schema (name/email/age)",
+  "prompt_hint": "Rename keys: user_name -> name, user_email -> email, user_age -> age. Keep values unchanged. Output structure is a JSON array of objects with keys {name, email, age}."
+}

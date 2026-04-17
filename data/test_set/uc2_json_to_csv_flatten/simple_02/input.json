@@ -1,0 +1,5 @@
+[
+  {"name": "Laptop", "price": 999, "specs": {"cpu": "M3", "ram_gb": 16}},
+  {"name": "Phone", "price": 799, "specs": {"cpu": "A17", "ram_gb": 8}},
+  {"name": "Tablet", "price": 599, "specs": {"cpu": "M2", "ram_gb": 8}}
+]

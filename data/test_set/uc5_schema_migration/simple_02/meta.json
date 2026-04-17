@@ -1,0 +1,8 @@
+{
+  "use_case": "uc5_schema_migration",
+  "complexity": "simple",
+  "input_format": "csv",
+  "output_format": "csv",
+  "description": "CSV column rename and reorder: userName -> name, userCity -> city, userAge -> age; new column order is name,city,age",
+  "prompt_hint": "Rename columns userName to name, userCity to city, userAge to age. Output column order must be: name,city,age. Values unchanged."
+}

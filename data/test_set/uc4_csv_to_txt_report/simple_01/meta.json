@@ -1,0 +1,10 @@
+{
+  "use_case": "uc4_csv_to_txt_report",
+  "complexity": "simple",
+  "input_format": "csv",
+  "output_format": "txt",
+  "description": "Regional sales CSV -> human-readable TXT report with totals",
+  "prompt_hint": "Produce a plain-text report with a title 'Sales Report by Region', a small aligned table of the four regions, and two summary lines: 'Total Sales: 43300' and 'Total Units: 88'.",
+  "content_accuracy_mode": "txt_substring",
+  "required_substrings": ["Sales Report", "North", "12500", "South", "8900", "East", "15200", "West", "6700", "Total Sales: 43300", "Total Units: 88"]
+}

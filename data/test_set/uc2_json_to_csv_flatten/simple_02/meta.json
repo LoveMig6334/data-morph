@@ -1,0 +1,8 @@
+{
+  "use_case": "uc2_json_to_csv_flatten",
+  "complexity": "simple",
+  "input_format": "json",
+  "output_format": "csv",
+  "description": "Product list with nested specs -> flat CSV with dot-notation columns",
+  "prompt_hint": "Flatten each JSON object into a CSV row using dot notation for nested keys."
+}

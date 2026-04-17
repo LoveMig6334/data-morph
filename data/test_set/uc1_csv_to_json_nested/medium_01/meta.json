@@ -1,0 +1,8 @@
+{
+  "use_case": "uc1_csv_to_json_nested",
+  "complexity": "medium",
+  "input_format": "csv",
+  "output_format": "json",
+  "description": "Flat CSV with duplicate user rows (one per order) -> nested JSON where each unique user has an array of their orders",
+  "prompt_hint": "Deduplicate users by name+email and collapse their rows into a single user object containing an 'orders' array of all that user's orders."
+}

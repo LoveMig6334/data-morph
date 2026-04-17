@@ -1,0 +1,8 @@
+{
+  "use_case": "uc2_json_to_csv_flatten",
+  "complexity": "medium",
+  "input_format": "json",
+  "output_format": "csv",
+  "description": "Weather data with 3 levels of nesting (city -> current -> wind) -> flat CSV",
+  "prompt_hint": "Fully flatten every nested object using dot notation. Column order: city, current.temp_c, current.humidity, current.wind.speed_kmh, current.wind.dir."
+}

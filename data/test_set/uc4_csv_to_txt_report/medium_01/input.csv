@@ -1,0 +1,6 @@
+product_id,name,quantity,unit_price,category
+P001,Widget,150,9.99,Hardware
+P002,Gadget,75,19.99,Electronics
+P003,Sprocket,200,4.50,Hardware
+P004,Doohickey,25,29.99,Electronics
+P005,Thingamajig,100,2.25,Hardware

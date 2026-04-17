@@ -1,0 +1,8 @@
+{
+  "use_case": "uc3_txt_log_to_csv",
+  "complexity": "simple",
+  "input_format": "txt",
+  "output_format": "csv",
+  "description": "ISO-8601 timestamp logs with bracketed source -> CSV",
+  "prompt_hint": "Format is ISOTIMESTAMP LEVEL [source] message. Strip the trailing Z from timestamps. Output CSV columns: timestamp, level, source, message. Messages containing colons should be preserved verbatim; quote CSV fields containing commas."
+}
