@@ -1,0 +1,36 @@
+{
+  "returncode": 0,
+  "stderr": "",
+  "usage": {
+    "input_tokens": 7,
+    "cache_creation_input_tokens": 14641,
+    "cache_read_input_tokens": 46292,
+    "output_tokens": 1151,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 14641,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "",
+    "iterations": [
+      {
+        "input_tokens": 1,
+        "output_tokens": 907,
+        "cache_read_input_tokens": 29787,
+        "cache_creation_input_tokens": 1359,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1359
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "session_id": "142c4e73-2ffc-48ca-917c-d6c6da2eff52",
+  "elapsed_sec": 14.28
+}

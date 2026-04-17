@@ -1,0 +1,8 @@
+{
+  "use_case": "uc5_schema_migration",
+  "complexity": "medium",
+  "input_format": "json",
+  "output_format": "json",
+  "description": "Legacy API response {results:[{firstName,lastName,emailAddress,birthYear}]} -> new API {users:[{name:{first,last}, contact:{email}, birth_year}]}",
+  "prompt_hint": "Rename the top-level key 'results' to 'users'. For each record, restructure: firstName/lastName go into a nested name object ({first, last}); emailAddress goes into a nested contact object as 'email'; birthYear becomes birth_year (snake_case). All values unchanged."
+}

@@ -1,0 +1,14 @@
+Inventory Report
+================
+ID    Name          Qty   Unit Price  Category
+P001  Widget        150    9.99       Hardware
+P002  Gadget         75   19.99       Electronics
+P003  Sprocket      200    4.50       Hardware
+P004  Doohickey      25   29.99       Electronics
+P005  Thingamajig   100    2.25       Hardware
+
+Category Totals (value):
+Hardware:    2623.50
+Electronics: 2249.50
+
+Total Inventory Value: 4873.00

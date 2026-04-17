@@ -1,0 +1,5 @@
+2026-04-15 09:00:01,234 INFO  [http-thread-5] com.example.api.UserController - GET /users returned 200
+2026-04-15 09:00:02,450 DEBUG [http-thread-3] com.example.db.Pool - Acquired connection #7
+2026-04-15 09:00:02,501 ERROR [http-thread-5] com.example.api.UserController - Exception: NullPointerException at line 42
+2026-04-15 09:00:03,012 WARN  [scheduler-1] com.example.cache.TTLManager - Cache miss rate: 89 percent
+2026-04-15 09:00:03,800 INFO  [http-thread-5] com.example.api.UserController - Request completed in 1299ms

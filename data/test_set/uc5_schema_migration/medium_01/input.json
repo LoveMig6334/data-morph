@@ -1,0 +1,7 @@
+{
+  "results": [
+    {"firstName": "Alice", "lastName": "Smith", "emailAddress": "alice@example.com", "birthYear": 1995},
+    {"firstName": "Bob", "lastName": "Jones", "emailAddress": "bob@example.com", "birthYear": 2000},
+    {"firstName": "Carol", "lastName": "Lee", "emailAddress": "carol@example.com", "birthYear": 1983}
+  ]
+}

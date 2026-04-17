@@ -1,0 +1,23 @@
+[
+  {
+    "user": {"name": "Alice", "email": "alice@example.com"},
+    "orders": [
+      {"id": 1001, "item": "Widget", "price": 9.99},
+      {"id": 1002, "item": "Gizmo", "price": 14.50},
+      {"id": 1004, "item": "Sprocket", "price": 3.25}
+    ]
+  },
+  {
+    "user": {"name": "Bob", "email": "bob@example.com"},
+    "orders": [
+      {"id": 1003, "item": "Gadget", "price": 19.99},
+      {"id": 1005, "item": "Doohickey", "price": 29.99}
+    ]
+  },
+  {
+    "user": {"name": "Carol", "email": "carol@example.com"},
+    "orders": [
+      {"id": 1006, "item": "Thingamajig", "price": 4.50}
+    ]
+  }
+]

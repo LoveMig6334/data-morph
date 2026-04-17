@@ -1,0 +1,8 @@
+{
+  "use_case": "uc3_txt_log_to_csv",
+  "complexity": "simple",
+  "input_format": "txt",
+  "output_format": "csv",
+  "description": "Bracketed-timestamp logs -> CSV with timestamp,level,source,message",
+  "prompt_hint": "Each line has format [YYYY-MM-DD HH:MM:SS] LEVEL source: message. Output CSV columns: timestamp (ISO-8601), level, source, message. Convert timestamps to YYYY-MM-DDTHH:MM:SS format."
+}

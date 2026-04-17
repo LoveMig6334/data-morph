@@ -1,0 +1,7 @@
+user_name,user_email,order_id,order_item,order_price
+Alice,alice@example.com,1001,Widget,9.99
+Alice,alice@example.com,1002,Gizmo,14.50
+Alice,alice@example.com,1004,Sprocket,3.25
+Bob,bob@example.com,1003,Gadget,19.99
+Bob,bob@example.com,1005,Doohickey,29.99
+Carol,carol@example.com,1006,Thingamajig,4.50

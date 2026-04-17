@@ -1,0 +1,8 @@
+{
+  "use_case": "uc1_csv_to_json_nested",
+  "complexity": "simple",
+  "input_format": "csv",
+  "output_format": "json",
+  "description": "Flat CSV with user_* and order_* columns -> nested JSON with user object and orders array",
+  "prompt_hint": "Group columns by prefix. user_* fields nest under 'user'. order_* fields nest under an 'orders' array (one order per row here)."
+}

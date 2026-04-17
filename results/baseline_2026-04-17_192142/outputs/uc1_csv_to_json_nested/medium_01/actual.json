@@ -1,0 +1,50 @@
+[
+  {
+    "user_name": "Alice",
+    "user_email": "alice@example.com",
+    "orders": [
+      {
+        "order_id": 1001,
+        "order_item": "Widget",
+        "order_price": 9.99
+      },
+      {
+        "order_id": 1002,
+        "order_item": "Gizmo",
+        "order_price": 14.50
+      },
+      {
+        "order_id": 1004,
+        "order_item": "Sprocket",
+        "order_price": 3.25
+      }
+    ]
+  },
+  {
+    "user_name": "Bob",
+    "user_email": "bob@example.com",
+    "orders": [
+      {
+        "order_id": 1003,
+        "order_item": "Gadget",
+        "order_price": 19.99
+      },
+      {
+        "order_id": 1005,
+        "order_item": "Doohickey",
+        "order_price": 29.99
+      }
+    ]
+  },
+  {
+    "user_name": "Carol",
+    "user_email": "carol@example.com",
+    "orders": [
+      {
+        "order_id": 1006,
+        "order_item": "Thingamajig",
+        "order_price": 4.50
+      }
+    ]
+  }
+]

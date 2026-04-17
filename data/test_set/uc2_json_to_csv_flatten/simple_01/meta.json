@@ -1,0 +1,8 @@
+{
+  "use_case": "uc2_json_to_csv_flatten",
+  "complexity": "simple",
+  "input_format": "json",
+  "output_format": "csv",
+  "description": "List of users with nested address object -> flat CSV using dot notation for nested keys",
+  "prompt_hint": "Flatten each JSON object into a CSV row. Nested keys use dot notation (e.g. address.city)."
+}

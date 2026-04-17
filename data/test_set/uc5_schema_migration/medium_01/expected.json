@@ -1,0 +1,7 @@
+{
+  "users": [
+    {"name": {"first": "Alice", "last": "Smith"}, "contact": {"email": "alice@example.com"}, "birth_year": 1995},
+    {"name": {"first": "Bob", "last": "Jones"}, "contact": {"email": "bob@example.com"}, "birth_year": 2000},
+    {"name": {"first": "Carol", "last": "Lee"}, "contact": {"email": "carol@example.com"}, "birth_year": 1983}
+  ]
+}

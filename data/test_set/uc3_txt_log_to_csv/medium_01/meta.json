@@ -1,0 +1,8 @@
+{
+  "use_case": "uc3_txt_log_to_csv",
+  "complexity": "medium",
+  "input_format": "txt",
+  "output_format": "csv",
+  "description": "Java-style application logs with milliseconds, thread tags, and dotted logger names -> CSV",
+  "prompt_hint": "Format is DATE TIME,MILLIS LEVEL [thread] logger.name - message. Drop the milliseconds and thread tag. The 'source' column should be the dotted logger name (com.example.*). Timestamps become ISO-8601 without ms. Messages include everything after ' - '."
+}

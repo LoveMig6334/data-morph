@@ -1,0 +1,10 @@
+{
+  "use_case": "uc4_csv_to_txt_report",
+  "complexity": "simple",
+  "input_format": "csv",
+  "output_format": "txt",
+  "description": "Student grades CSV -> TXT report with per-subject averages",
+  "prompt_hint": "Produce a report titled 'Student Grade Report'. List all four students with their scores in an aligned table, then show 'Subject Averages:' with Math 78.00, Science 77.75, English 80.00.",
+  "content_accuracy_mode": "txt_substring",
+  "required_substrings": ["Grade Report", "Alice", "85", "Bob", "72", "Carol", "95", "David", "60", "78", "77.75", "80"]
+}

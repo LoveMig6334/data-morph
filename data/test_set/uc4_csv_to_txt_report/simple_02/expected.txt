@@ -1,0 +1,12 @@
+Student Grade Report
+====================
+Student  Math  Science  English
+Alice     85     90       88
+Bob       72     68       75
+Carol     95     98       92
+David     60     55       65
+
+Subject Averages:
+Math:    78.00
+Science: 77.75
+English: 80.00

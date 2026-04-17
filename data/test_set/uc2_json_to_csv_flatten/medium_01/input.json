@@ -1,0 +1,5 @@
+[
+  {"city": "Bangkok", "current": {"temp_c": 32, "humidity": 78, "wind": {"speed_kmh": 12, "dir": "SW"}}},
+  {"city": "Tokyo", "current": {"temp_c": 18, "humidity": 55, "wind": {"speed_kmh": 8, "dir": "N"}}},
+  {"city": "Reykjavik", "current": {"temp_c": 2, "humidity": 88, "wind": {"speed_kmh": 35, "dir": "NE"}}}
+]
