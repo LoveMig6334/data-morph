@@ -1,0 +1,28 @@
+[project]
+name = "data-morph"
+version = "0.1.0"
+description = "Distill file-format-conversion capability from Claude Opus into a fine-tuned Gemma 2B (LoRA/QLoRA)."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+    "seaborn",
+    "jupyter",
+    "ipykernel",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
