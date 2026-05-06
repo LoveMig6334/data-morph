@@ -39,6 +39,7 @@ class MetadataWarning:
 
 
 def check_empty_file(*, row_count: int) -> MetadataWarning | None:
+    """Fire `EMPTY_FILE` (error) when the file has zero data rows."""
     if row_count > 0:
         return None
     return MetadataWarning(
@@ -50,6 +51,7 @@ def check_empty_file(*, row_count: int) -> MetadataWarning | None:
 
 
 def check_missing_header(*, has_header: bool) -> MetadataWarning | None:
+    """Fire `MISSING_HEADER` (warn) when csv.Sniffer detects no header row."""
     if has_header:
         return None
     return MetadataWarning(
@@ -64,6 +66,7 @@ def check_missing_header(*, has_header: bool) -> MetadataWarning | None:
 
 
 def check_duplicate_column_name(*, raw_header: list[str]) -> MetadataWarning | None:
+    """Fire `DUPLICATE_COLUMN_NAME` (warn) when header has repeated column names."""
     seen: set[str] = set()
     dupes: list[str] = []
     for name in raw_header:
@@ -84,6 +87,7 @@ def check_duplicate_column_name(*, raw_header: list[str]) -> MetadataWarning | N
 
 
 def check_inconsistent_quoting(*, inconsistent: bool) -> MetadataWarning | None:
+    """Fire `INCONSISTENT_QUOTING` (warn) when csv.Sniffer detects mixed quoting styles."""
     if not inconsistent:
         return None
     return MetadataWarning(
@@ -100,6 +104,7 @@ def check_inconsistent_quoting(*, inconsistent: bool) -> MetadataWarning | None:
 def check_latin1_fallback(
     *, final_encoding: str, attempted: list[str]
 ) -> MetadataWarning | None:
+    """Fire `LATIN1_FALLBACK` (warn) when UTF-8 decoding fails and latin-1 is used as fallback."""
     if final_encoding != "latin-1":
         return None
     return MetadataWarning(
@@ -119,11 +124,14 @@ def check_latin1_fallback(
 def check_repeating_entity(
     *, column: dict[str, Any], row_count: int
 ) -> MetadataWarning | None:
+    """Fire `REPEATING_ENTITY` (warn) when a string column has unique_count / row_count < 0.5."""
     if column.get("dtype") != "string":
         return None
     if row_count <= 0:
         return None
     unique_count = column["unique_count"]
+    if unique_count == 0:
+        return None
     ratio = unique_count / row_count
     if ratio >= 0.5:
         return None
@@ -149,6 +157,7 @@ def check_repeating_entity(
 def check_numeric_column_quote_risk(
     *, column: dict[str, Any]
 ) -> MetadataWarning | None:
+    """Fire `NUMERIC_COLUMN_QUOTE_RISK` (warn) when a numeric column may be incorrectly quoted."""
     dtype = column.get("dtype")
     if dtype not in ("integer", "float"):
         return None
@@ -166,6 +175,7 @@ def check_numeric_column_quote_risk(
 def check_mixed_dtype_column(
     *, column: dict[str, Any]
 ) -> MetadataWarning | None:
+    """Fire `MIXED_DTYPE_COLUMN` (error) when a column contains multiple data types."""
     if column.get("dtype") != "mixed":
         return None
     return MetadataWarning(
@@ -182,6 +192,7 @@ def check_mixed_dtype_column(
 def check_high_null_rate(
     *, column: dict[str, Any], row_count: int
 ) -> MetadataWarning | None:
+    """Fire `HIGH_NULL_RATE` (warn) when a column has null_count / row_count > 0.1."""
     if row_count <= 0:
         return None
     null_count = column.get("null_count", 0)
@@ -207,6 +218,7 @@ def check_high_null_rate(
 def check_likely_date_column(
     *, column: dict[str, Any]
 ) -> MetadataWarning | None:
+    """Fire `LIKELY_DATE_COLUMN` (info) when a column is detected as date or datetime type."""
     dtype = column.get("dtype")
     if dtype not in ("date", "datetime"):
         return None
