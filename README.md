@@ -12,9 +12,36 @@ Rule-based parsers can't handle messy, context-dependent file conversions. Front
 
 ## Approach
 
-1. **Teacher**: Claude Opus + Claude Code + Agent Skill generates 500–1000 verified `(instruction, input, output)` training pairs.
+1. **Teacher**: Claude Opus + Claude Code + Agent Skill generates 500–1000 verified training pairs.
 2. **Student**: Gemma 2B, fine-tuned with LoRA / QLoRA.
 3. **Target**: ≥80% of teacher accuracy across 4 metrics — Format Validity, Schema Compliance, Loadability, Content Accuracy.
+
+### Pipeline architecture
+
+Conversion is a **five-stage pipeline**, not a single end-to-end model call.
+The model only ever sees a small structured metadata envelope, never the
+full source file:
+
+```
+[source file]
+    │
+    ├─→ [1. Metadata extractor]  deterministic — schema + samples + warnings
+    ├─→ [2. Context summarizer]  Gemma 2B base — short NL summary
+    ↓
+[3. Script generator]   Claude Opus (training) → Gemma 2B fine-tuned (inference)
+    ↓ outputs an executable Python script
+[4. Sandbox executor]   deterministic — runs the script
+    ↓ converted output file
+[5. Validator]          the 4 W2 metrics — format, schema, load, content
+    ↓
+[output file]
+```
+
+**Why this shape**: distillation target narrows from "transform a whole
+file" (impractical for a 2 B model) to "read metadata, write a script"
+(realistic). The model never sees full file content, so the pipeline scales
+to arbitrary file sizes. Failures are debuggable — the script is a readable
+intermediate artefact.
 
 ## Supported formats
 
@@ -22,14 +49,16 @@ CSV, JSON, TXT — in 5 use cases (CSV→JSON nested, JSON→CSV flattening, TXT
 
 ## Setup
 
-Requires **Python 3.11+**.
+Requires **Python 3.12** (chosen for stronger MLX support). Project is
+managed by [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-py -3.11 -m venv .venv
-.venv\Scripts\activate         # Windows
-# source .venv/bin/activate    # macOS/Linux
-pip install -r requirements.txt
+uv sync                        # creates .venv from pyproject.toml + uv.lock
+source .venv/bin/activate      # macOS / Linux
+# .venv\Scripts\activate       # Windows
 ```
+
+Add a new dependency: `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only).
 
 ## Hardware / framework
 
@@ -43,13 +72,20 @@ data/
   raw/          # source files collected from Kaggle / HF / GitHub (gitignored)
   interim/      # teacher-generated pairs pre-verification
   processed/    # verified training set for fine-tuning
+  test_set/     # 15 hand-crafted W2 baseline cases
 notebooks/      # EDA, error analysis, experiments
 src/
+  extractor/    # Stage 1: deterministic metadata extractor (CSV done; JSON, TXT next)
+  evaluation/   # Stage 5: the 4 W2 metrics + Opus-baseline runner
   data/         # data collection + teacher-model pair generation
   features/     # formatting into (instruction, input, output)
-  models/       # LoRA/QLoRA fine-tune + inference
-tests/          # unit tests + evaluation pipeline
+  models/       # LoRA/QLoRA fine-tune + inference (W5)
+scripts/        # baseline + plotting CLIs
+skills/         # Agent-Skill prompts read by `claude -p`
+tests/          # unit tests (metrics, extractor) + fixtures
 models/         # fine-tuned checkpoints (gitignored)
+results/        # baseline run artefacts (per-run summary.json + plots)
+docs/           # specs, plans, weekly reports (gitignored)
 ```
 
 ## Timeline (8 weeks)

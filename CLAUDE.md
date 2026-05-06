@@ -8,6 +8,24 @@ Guidance for Claude Code when working in this repo.
 
 Ship target: `pip install`-able library + model on Hugging Face Hub.
 
+## Pipeline architecture (revised W3)
+
+The conversion pipeline is **five stages**, not one end-to-end model call. The
+model never sees the full source file — only a small metadata envelope.
+
+```
+[file] → [1: extractor] → [2: summarizer (Gemma)] → [3: script gen (Opus→Gemma)]
+       → [4: sandbox exec] → [5: validator (W2 metrics)] → [output]
+```
+
+- **Stage 1** (`src/extractor/`) — deterministic. Phase 1 (CSV) shipped; JSON + TXT next.
+- **Stage 2** — Gemma 2B base, NL summary of the envelope. Phase 4 of W3.
+- **Stage 3** — Claude Opus during training, Gemma 2B fine-tuned at inference. Outputs `<analysis>…</analysis> + <script>…</script>`.
+- **Stage 4** — Python sandbox runs the script on the source file.
+- **Stage 5** — `src/evaluation/metrics.py` (the four W2 metrics, untouched).
+
+Distillation target: "read metadata, write a script" — narrower than "transform a whole file". See `docs/W3_phase1.md` for the full rationale.
+
 ## Platform reality check
 
 The plan assumes **MacBook Pro M5 Max + MLX**. The user's Mac (custom spec) arrives **2026-04-30**; until then the dev machine is **Windows 11**.
@@ -43,12 +61,18 @@ When touching training or inference code:
 data/raw/        immutable source files — never modify in place
 data/interim/    teacher outputs before verification
 data/processed/  only verified pairs enter here → used for training
+data/test_set/   15 hand-crafted W2 baseline cases
 notebooks/       exploration; graduate reusable code into src/
+src/extractor/   Stage 1 — deterministic metadata extractor (CSV done; JSON, TXT next)
+src/evaluation/  Stage 5 — the four W2 metrics + Opus baseline runner. DO NOT EDIT.
 src/data/        collection + teacher pair generation
 src/features/    formatting into (instruction, input, output)
-src/models/      fine-tune + inference
+src/models/      fine-tune + inference (W5)
+skills/          Agent-Skill prompts (read by `claude -p` at runtime)
+scripts/         baseline + plotting CLIs
 tests/           unit tests + the automated eval pipeline
 models/          checkpoints (gitignored)
+docs/            specs, plans, weekly reports (gitignored)
 ```
 
 Rule: if a notebook cell is run more than twice in two different notebooks, move it into `src/`.
