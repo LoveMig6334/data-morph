@@ -17,10 +17,10 @@ import io
 import json
 from typing import Any, Iterable
 
-
 # ---------------------------------------------------------------------------
 # 1. Format validity
 # ---------------------------------------------------------------------------
+
 
 def format_validity(output: str, output_format: str) -> float:
     """Return 1.0 if output parses as the target format, else 0.0."""
@@ -54,6 +54,7 @@ def format_validity(output: str, output_format: str) -> float:
 # ---------------------------------------------------------------------------
 # 2. Schema compliance
 # ---------------------------------------------------------------------------
+
 
 def _json_key_skeleton(obj: Any) -> Any:
     """Recursively reduce a JSON value to its structural skeleton.
@@ -106,12 +107,14 @@ def schema_compliance(actual: str, expected: str, output_format: str) -> float:
 # 3. Loadability
 # ---------------------------------------------------------------------------
 
+
 def loadability(output: str, output_format: str) -> float:
     """Return 1.0 if pandas can load the output without error, else 0.0."""
     fmt = output_format.lower()
     if fmt == "json":
         try:
             import pandas as pd
+
             data = json.loads(output)
             # pd.json_normalize handles both lists-of-objects and nested dicts.
             if isinstance(data, list):
@@ -131,6 +134,7 @@ def loadability(output: str, output_format: str) -> float:
     if fmt == "csv":
         try:
             import pandas as pd
+
             df = pd.read_csv(io.StringIO(output))
             return 1.0 if len(df.columns) > 0 else 0.0
         except Exception:
@@ -143,6 +147,7 @@ def loadability(output: str, output_format: str) -> float:
 # ---------------------------------------------------------------------------
 # 4. Content accuracy
 # ---------------------------------------------------------------------------
+
 
 def _values_equal(a: Any, b: Any) -> bool:
     """Compare two scalar values with light coercion.
@@ -262,6 +267,7 @@ def content_accuracy(
 # ---------------------------------------------------------------------------
 # Aggregate helper
 # ---------------------------------------------------------------------------
+
 
 def score_all(
     actual: str,
