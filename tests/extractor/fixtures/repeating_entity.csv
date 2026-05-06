@@ -1,0 +1,6 @@
+user_name,user_email,order_id,order_item,order_price
+Alice Smith,alice@example.com,1001,Widget A,25.00
+Alice Smith,alice@example.com,1002,Gadget B,14.50
+Alice Smith,alice@example.com,1003,Tool C,7.25
+Bob Jones,bob@example.com,1004,Widget A,25.00
+Bob Jones,bob@example.com,1005,Sprocket D,49.99
