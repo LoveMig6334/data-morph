@@ -19,20 +19,20 @@ from src.evaluation.metrics import (  # noqa: E402
     score_all,
 )
 
-
 # ---------------------------------------------------------------------------
 # format_validity
 # ---------------------------------------------------------------------------
 
+
 class TestFormatValidity:
     def test_valid_json(self):
         assert format_validity('{"a": 1}', "json") == 1.0
-        assert format_validity('[1, 2, 3]', "json") == 1.0
+        assert format_validity("[1, 2, 3]", "json") == 1.0
 
     def test_invalid_json(self):
         assert format_validity('{"a": }', "json") == 0.0
-        assert format_validity('not json', "json") == 0.0
-        assert format_validity('```json\n{}\n```', "json") == 0.0  # fences invalidate
+        assert format_validity("not json", "json") == 0.0
+        assert format_validity("```json\n{}\n```", "json") == 0.0  # fences invalidate
 
     def test_valid_csv(self):
         assert format_validity("a,b\n1,2\n3,4\n", "csv") == 1.0
@@ -53,6 +53,7 @@ class TestFormatValidity:
 # ---------------------------------------------------------------------------
 # schema_compliance
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaCompliance:
     def test_json_same_structure(self):
@@ -88,6 +89,7 @@ class TestSchemaCompliance:
 # loadability
 # ---------------------------------------------------------------------------
 
+
 class TestLoadability:
     def test_csv_loads_in_pandas(self):
         assert loadability("a,b\n1,2\n3,4\n", "csv") == 1.0
@@ -109,6 +111,7 @@ class TestLoadability:
 # ---------------------------------------------------------------------------
 # content_accuracy
 # ---------------------------------------------------------------------------
+
 
 class TestContentAccuracy:
     def test_json_perfect_match(self):
@@ -161,6 +164,7 @@ class TestContentAccuracy:
 # ---------------------------------------------------------------------------
 # score_all
 # ---------------------------------------------------------------------------
+
 
 class TestScoreAll:
     def test_returns_all_four_keys(self):
