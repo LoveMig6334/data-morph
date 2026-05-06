@@ -446,3 +446,41 @@ def _push(
 ) -> None:
     if maybe is not None:
         bucket.append(maybe)
+
+
+def _main() -> int:
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="Extract CSV metadata for the data-morph pipeline.",
+    )
+    parser.add_argument("file", type=Path, help="Path to a .csv file")
+    parser.add_argument(
+        "--head-n", type=int, default=3,
+        help="Number of rows to sample from the head (default: 3)",
+    )
+    parser.add_argument(
+        "--middle-n", type=int, default=1,
+        help="Number of rows to sample from the middle (default: 1)",
+    )
+    parser.add_argument(
+        "--tail-n", type=int, default=1,
+        help="Number of rows to sample from the tail (default: 1)",
+    )
+    args = parser.parse_args()
+
+    extractor = CSVExtractor(
+        head_n=args.head_n,
+        middle_n=args.middle_n,
+        tail_n=args.tail_n,
+    )
+    envelope = extractor.extract(args.file)
+    rendered = json.dumps(envelope, indent=2, default=str)
+    print(rendered)
+    print(f"# rough token estimate: ~{len(rendered) // 4} (chars / 4)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())
