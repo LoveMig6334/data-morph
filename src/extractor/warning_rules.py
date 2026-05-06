@@ -114,3 +114,109 @@ def check_latin1_fallback(
             "final_encoding": "latin-1",
         },
     )
+
+
+def check_repeating_entity(
+    *, column: dict[str, Any], row_count: int
+) -> MetadataWarning | None:
+    if column.get("dtype") != "string":
+        return None
+    if row_count <= 0:
+        return None
+    unique_count = column["unique_count"]
+    ratio = unique_count / row_count
+    if ratio >= 0.5:
+        return None
+    rows_per_entity_avg = round(row_count / unique_count, 2)
+    return MetadataWarning(
+        code="REPEATING_ENTITY",
+        severity="warn",
+        message=(
+            f"Column '{column['name']}' has {unique_count} unique values "
+            f"across {row_count} rows ({rows_per_entity_avg} rows per entity "
+            f"avg). If converting to nested JSON, consider grouping rows by "
+            f"this column before serializing."
+        ),
+        context={
+            "column": column["name"],
+            "unique_count": unique_count,
+            "row_count": row_count,
+            "rows_per_entity_avg": rows_per_entity_avg,
+        },
+    )
+
+
+def check_numeric_column_quote_risk(
+    *, column: dict[str, Any]
+) -> MetadataWarning | None:
+    dtype = column.get("dtype")
+    if dtype not in ("integer", "float"):
+        return None
+    return MetadataWarning(
+        code="NUMERIC_COLUMN_QUOTE_RISK",
+        severity="warn",
+        message=(
+            f"Column '{column['name']}' is {dtype}. When serializing to "
+            f"JSON, do NOT cast to string — preserve as numeric type."
+        ),
+        context={"column": column["name"], "dtype": dtype},
+    )
+
+
+def check_mixed_dtype_column(
+    *, column: dict[str, Any]
+) -> MetadataWarning | None:
+    if column.get("dtype") != "mixed":
+        return None
+    return MetadataWarning(
+        code="MIXED_DTYPE_COLUMN",
+        severity="error",
+        message=(
+            f"Column '{column['name']}' contains values of multiple dtypes. "
+            f"The conversion script must perform explicit per-row casting."
+        ),
+        context={"column": column["name"]},
+    )
+
+
+def check_high_null_rate(
+    *, column: dict[str, Any], row_count: int
+) -> MetadataWarning | None:
+    if row_count <= 0:
+        return None
+    null_count = column.get("null_count", 0)
+    rate = null_count / row_count
+    if rate <= 0.1:
+        return None
+    return MetadataWarning(
+        code="HIGH_NULL_RATE",
+        severity="warn",
+        message=(
+            f"Column '{column['name']}' has {null_count} nulls in "
+            f"{row_count} rows ({rate:.1%}). Script must handle None/NaN."
+        ),
+        context={
+            "column": column["name"],
+            "null_count": null_count,
+            "row_count": row_count,
+            "null_rate": round(rate, 3),
+        },
+    )
+
+
+def check_likely_date_column(
+    *, column: dict[str, Any]
+) -> MetadataWarning | None:
+    dtype = column.get("dtype")
+    if dtype not in ("date", "datetime"):
+        return None
+    return MetadataWarning(
+        code="LIKELY_DATE_COLUMN",
+        severity="info",
+        message=(
+            f"Column '{column['name']}' is detected as {dtype}. Script "
+            f"should parse and re-serialize using a consistent format "
+            f"(ISO 8601 recommended)."
+        ),
+        context={"column": column["name"], "dtype": dtype},
+    )
