@@ -19,3 +19,6 @@ markers = [
     "performance: opt-in slow tests; run with `pytest -m performance`",
 ]
 addopts = "-m 'not performance'"
+
+[tool.pyright]
+extraPaths = ["."]
