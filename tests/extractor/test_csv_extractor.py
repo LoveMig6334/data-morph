@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -269,3 +272,13 @@ class TestCSVExtractorDelimiter:
         )
         # Pandas should produce 3 columns, not 1.
         assert len(env["schema"]["columns"]) == 3
+
+
+@pytest.mark.performance
+class TestCSVPerformance:
+    def test_10k_rows_under_two_seconds(self):
+        t0 = time.perf_counter()
+        env = CSVExtractor().extract(FIXTURES / "large_file.csv")
+        elapsed = time.perf_counter() - t0
+        assert env["schema"]["row_count"] == 10_000
+        assert elapsed <= 2.0, f"extraction took {elapsed:.2f}s (budget 2.0)"
