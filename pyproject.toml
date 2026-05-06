@@ -13,3 +13,9 @@ dependencies = [
 dev = [
     "pytest>=9.0.3",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "performance: opt-in slow tests; run with `pytest -m performance`",
+]
+addopts = "-m 'not performance'"
