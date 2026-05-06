@@ -13,6 +13,35 @@ ENCODING_LADDER: tuple[str, ...] = ("utf-8-sig", "utf-8", "latin-1")
 SNIFF_SAMPLE_BYTES = 16 * 1024
 
 
+def _is_numeric(value: str) -> bool:
+    """Return True if value parses as int or float."""
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
+def _body_has_numeric_column(sample: str, delimiter: str) -> bool:
+    """Return True if the body (rows after row 1) has any all-numeric column.
+
+    Used by sniff_dialect to disambiguate Sniffer's has_header verdict on
+    all-string CSVs.
+    """
+    rows = list(csv.reader(sample.splitlines(), delimiter=delimiter))
+    if len(rows) < 2:
+        return False
+    body = rows[1:]
+    n_cols = len(rows[0])
+    for col_idx in range(n_cols):
+        col_values = [r[col_idx] for r in body if col_idx < len(r) and r[col_idx]]
+        if not col_values:
+            continue
+        if all(_is_numeric(v) for v in col_values):
+            return True
+    return False
+
+
 def detect_encoding(file_path: Path) -> tuple[str, list[str]]:
     """Return (chosen_encoding, list_of_encodings_attempted_before_success).
 
@@ -60,9 +89,19 @@ def sniff_dialect(file_path: Path, *, encoding: str) -> dict[str, Any]:
         quote_char = '"'
 
     try:
-        has_header = sniffer.has_header(sample)
+        sniff_says_header = sniffer.has_header(sample)
     except csv.Error:
+        sniff_says_header = True
+
+    if sniff_says_header:
         has_header = True
+    else:
+        # Sniffer's has_header heuristic relies on a type difference between
+        # row 1 and the body. On all-string CSVs it returns False even when
+        # row 1 is a header. Apply one fallback: trust Sniffer only when the
+        # body has at least one all-numeric column (strong type signal).
+        # Otherwise default to has_header=True.
+        has_header = not _body_has_numeric_column(sample, delimiter)
 
     return {
         "delimiter": delimiter,
