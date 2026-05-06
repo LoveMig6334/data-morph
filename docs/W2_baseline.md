@@ -212,7 +212,7 @@ Concrete capabilities the training data must teach:
 
 ## 6. Reproducibility
 
-From the project root (`data morph/`), with the Python 3.11 venv active and
+From the project root (`data morph/`), with the Python 3.12 venv active and
 Claude Code logged in:
 
 ```bash
