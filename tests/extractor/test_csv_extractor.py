@@ -163,3 +163,87 @@ class TestBuildColumnMetadata:
             sample_values_per_column=3,
         )
         assert len(m["sample_values"]) == 3
+
+
+from src.extractor.csv_extractor import CSVExtractor  # noqa: E402
+
+
+def _codes(envelope: dict) -> list[str]:
+    return [w["code"] for w in envelope["warnings"]]
+
+
+class TestCSVExtractorEnvelope:
+    def test_supports_csv(self):
+        e = CSVExtractor()
+        assert e.supports(Path("a.csv")) is True
+        assert e.supports(Path("a.json")) is False
+
+    def test_envelope_shape(self):
+        e = CSVExtractor()
+        env = e.extract(FIXTURES / "simple_users.csv")
+        assert env["format"] == "csv"
+        assert env["schema_version"] == "0.1"
+        assert "file_size_bytes" in env
+        assert env["encoding"] in ("utf-8", "utf-8-sig")
+        assert "schema" in env and "samples" in env and "warnings" in env
+
+
+class TestCSVExtractorWarnings:
+    def test_simple_users_clean_baseline(self):
+        env = CSVExtractor().extract(FIXTURES / "simple_users.csv")
+        assert _codes(env) == [], (
+            f"expected no warnings, got {env['warnings']}"
+        )
+
+    def test_repeating_entity_fixture_fires_expected_codes(self):
+        env = CSVExtractor().extract(FIXTURES / "repeating_entity.csv")
+        codes = _codes(env)
+        assert "REPEATING_ENTITY" in codes
+        assert "NUMERIC_COLUMN_QUOTE_RISK" in codes
+
+    def test_numeric_columns_fixture(self):
+        env = CSVExtractor().extract(FIXTURES / "numeric_columns.csv")
+        codes = _codes(env)
+        assert codes.count("NUMERIC_COLUMN_QUOTE_RISK") == 3
+
+    def test_mixed_dtype_fixture(self):
+        env = CSVExtractor().extract(FIXTURES / "mixed_dtype.csv")
+        assert "MIXED_DTYPE_COLUMN" in _codes(env)
+
+    def test_empty_file_fixture(self):
+        env = CSVExtractor().extract(FIXTURES / "empty_file.csv")
+        assert "EMPTY_FILE" in _codes(env)
+        assert env["schema"]["row_count"] == 0
+
+    def test_headerless_fixture_synthesizes_columns(self):
+        env = CSVExtractor().extract(FIXTURES / "headerless.csv")
+        assert "MISSING_HEADER" in _codes(env)
+        names = [c["name"] for c in env["schema"]["columns"]]
+        assert names == ["c0", "c1", "c2"]
+
+    def test_duplicate_columns_fixture(self):
+        env = CSVExtractor().extract(FIXTURES / "duplicate_columns.csv")
+        assert "DUPLICATE_COLUMN_NAME" in _codes(env)
+        names = [c["name"] for c in env["schema"]["columns"]]
+        # pandas auto-renames the second "name" → "name.1".
+        assert "name" in names and "name.1" in names
+
+
+class TestCSVExtractorEncoding:
+    def test_latin1_fallback_warning(self, tmp_path: Path):
+        p = tmp_path / "latin.csv"
+        p.write_bytes(b"name,city\nCaf\xe9,Paris\nNa\xefve,Lyon\n")
+        env = CSVExtractor().extract(p)
+        codes = _codes(env)
+        assert "LATIN1_FALLBACK" in codes
+        assert env["encoding"] == "latin-1"
+
+
+class TestCSVExtractorSamples:
+    def test_samples_present(self):
+        env = CSVExtractor().extract(FIXTURES / "repeating_entity.csv")
+        s = env["samples"]
+        # 5 rows = head_n + middle_n + tail_n exactly → small-file rule.
+        assert len(s["head"]) == 5
+        assert s["middle"] == []
+        assert s["tail"] == []

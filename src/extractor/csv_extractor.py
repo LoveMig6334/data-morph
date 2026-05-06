@@ -276,3 +276,169 @@ def _coerce_samples(samples: list[str], dtype: str) -> list[Any]:
     if dtype == "boolean":
         return [v.lower() in ("true", "1", "yes") for v in samples]
     return list(samples)
+
+
+from .base import MetadataExtractor
+from .sampler import sample_csv
+from .warning_rules import (
+    MetadataWarning,
+    check_duplicate_column_name,
+    check_empty_file,
+    check_high_null_rate,
+    check_inconsistent_quoting,
+    check_latin1_fallback,
+    check_likely_date_column,
+    check_missing_header,
+    check_mixed_dtype_column,
+    check_numeric_column_quote_risk,
+    check_repeating_entity,
+)
+
+
+class CSVExtractor(MetadataExtractor):
+    """Concrete metadata extractor for CSV files (spec §4.2)."""
+
+    def __init__(
+        self,
+        head_n: int = 3,
+        middle_n: int = 1,
+        tail_n: int = 1,
+        sample_values_per_column: int = 3,
+        max_rows_for_inference: int = 200,
+    ) -> None:
+        self.head_n = head_n
+        self.middle_n = middle_n
+        self.tail_n = tail_n
+        self.sample_values_per_column = sample_values_per_column
+        self.max_rows_for_inference = max_rows_for_inference
+
+    def supports(self, file_path: Path) -> bool:
+        return file_path.suffix.lower() == ".csv"
+
+    def extract(self, file_path: Path) -> dict[str, Any]:
+        warnings: list[MetadataWarning] = []
+        file_size = file_path.stat().st_size
+
+        encoding, attempted = detect_encoding(file_path)
+        _push(warnings, check_latin1_fallback(
+            final_encoding=encoding, attempted=attempted,
+        ))
+
+        # Empty file short-circuit.
+        if file_size == 0:
+            _push(warnings, check_empty_file(row_count=0))
+            return self._envelope(
+                file_path, file_size, encoding, schema={
+                    "delimiter": ",", "quote_char": '"',
+                    "has_header": False, "row_count": 0, "columns": [],
+                },
+                samples={"head": [], "middle": [], "tail": []},
+                warnings=warnings,
+            )
+
+        dialect = sniff_dialect(file_path, encoding=encoding)
+        _push(warnings, check_missing_header(has_header=dialect["has_header"]))
+        _push(warnings, check_inconsistent_quoting(
+            inconsistent=dialect["inconsistent_quoting"],
+        ))
+
+        row_count = count_data_rows(
+            file_path, encoding=encoding, has_header=dialect["has_header"],
+        )
+        _push(warnings, check_empty_file(row_count=row_count))
+
+        if row_count == 0:
+            return self._envelope(
+                file_path, file_size, encoding, schema={
+                    **{k: dialect[k] for k in
+                       ("delimiter", "quote_char", "has_header")},
+                    "row_count": 0, "columns": [],
+                },
+                samples={"head": [], "middle": [], "tail": []},
+                warnings=warnings,
+            )
+
+        # Read the raw header line first so we can detect duplicates BEFORE
+        # pandas silently auto-renames them to 'name', 'name.1', etc.
+        if dialect["has_header"]:
+            with file_path.open("r", encoding=encoding, newline="") as f:
+                raw_header = next(csv.reader(f), [])
+            _push(warnings, check_duplicate_column_name(raw_header=raw_header))
+
+        # Schema inference on a capped sample.
+        df = pd.read_csv(
+            file_path,
+            encoding=encoding,
+            header=0 if dialect["has_header"] else None,
+            nrows=self.max_rows_for_inference,
+        )
+        if not dialect["has_header"]:
+            df.columns = [f"c{i}" for i in range(len(df.columns))]
+
+        columns_meta: list[dict[str, Any]] = []
+        for col_name in df.columns:
+            raw_values = [
+                "" if pd.isna(v) else str(v) for v in df[col_name].tolist()
+            ]
+            meta = build_column_metadata(
+                name=str(col_name),
+                values=raw_values,
+                sample_values_per_column=self.sample_values_per_column,
+            )
+            columns_meta.append(meta)
+            _push(warnings, check_repeating_entity(
+                column=meta, row_count=row_count,
+            ))
+            _push(warnings, check_numeric_column_quote_risk(column=meta))
+            _push(warnings, check_mixed_dtype_column(column=meta))
+            _push(warnings, check_high_null_rate(
+                column=meta, row_count=row_count,
+            ))
+            _push(warnings, check_likely_date_column(column=meta))
+
+        samples = sample_csv(
+            file_path,
+            total_rows=row_count,
+            encoding=encoding,
+            head_n=self.head_n,
+            middle_n=self.middle_n,
+            tail_n=self.tail_n,
+        )
+
+        schema = {
+            "delimiter": dialect["delimiter"],
+            "quote_char": dialect["quote_char"],
+            "has_header": dialect["has_header"],
+            "row_count": row_count,
+            "columns": columns_meta,
+        }
+        return self._envelope(
+            file_path, file_size, encoding, schema, samples, warnings,
+        )
+
+    def _envelope(
+        self,
+        file_path: Path,
+        file_size: int,
+        encoding: str,
+        schema: dict[str, Any],
+        samples: dict[str, list[dict[str, Any]]],
+        warnings: list[MetadataWarning],
+    ) -> dict[str, Any]:
+        return {
+            "format": "csv",
+            "file_path": str(file_path),
+            "file_size_bytes": file_size,
+            "encoding": encoding,
+            "schema_version": self.SCHEMA_VERSION,
+            "schema": schema,
+            "samples": samples,
+            "warnings": [w.to_dict() for w in warnings],
+        }
+
+
+def _push(
+    bucket: list[MetadataWarning], maybe: MetadataWarning | None
+) -> None:
+    if maybe is not None:
+        bucket.append(maybe)
