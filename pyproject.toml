@@ -1,9 +1,15 @@
 [project]
 name = "data-morph"
 version = "0.1.0"
-description = "Add your description here"
+description = "Distill a CSV/JSON/TXT file-conversion capability from Claude Opus into a fine-tuned Gemma 2B (LoRA/QLoRA)."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "matplotlib>=3.10.9",
+    "pandas>=3.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
 ]

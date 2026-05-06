@@ -87,3 +87,9 @@ The evaluation script in `tests/` (or `src/` — TBD) must compute all four on e
 - This is a student project for AI Builders 2026 — grading matters. When in doubt, map work back to the grading criteria table in the README / plan.
 - The user is building from scratch on Windows but planning to train on macOS/Colab. Don't assume any CUDA, MLX, or GPU is available on the local machine unless the user confirms.
 - Prefer small, reviewable changes. The user is actively learning — explain non-obvious ML/Python choices briefly.
+
+## Tracking progress
+
+- **`docs/progression.md` is the living progress tracker.** Every time you finish a meaningful piece of work — a feature, a fix, a config change, a milestone — append a dated bullet to its **Update log** section (newest on top, ≤ 2 lines per entry).
+- If the work changes weekly status, scores, open issues, or "next up", update those sections too. Keep the doc concise — it's a tracker, not a journal.
+- "Done with something" includes: code merged, dependencies added, eval runs completed, plan-week finished. It does *not* include exploratory reads or aborted attempts.
