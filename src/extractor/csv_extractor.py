@@ -362,13 +362,17 @@ class CSVExtractor(MetadataExtractor):
         # pandas silently auto-renames them to 'name', 'name.1', etc.
         if dialect["has_header"]:
             with file_path.open("r", encoding=encoding, newline="") as f:
-                raw_header = next(csv.reader(f), [])
+                raw_header = next(
+                    csv.reader(f, delimiter=dialect["delimiter"]), []
+                )
             _push(warnings, check_duplicate_column_name(raw_header=raw_header))
 
         # Schema inference on a capped sample.
         df = pd.read_csv(
             file_path,
             encoding=encoding,
+            sep=dialect["delimiter"],
+            quotechar=dialect["quote_char"],
             header=0 if dialect["has_header"] else None,
             nrows=self.max_rows_for_inference,
         )

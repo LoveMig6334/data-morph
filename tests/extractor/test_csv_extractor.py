@@ -247,3 +247,25 @@ class TestCSVExtractorSamples:
         assert len(s["head"]) == 5
         assert s["middle"] == []
         assert s["tail"] == []
+
+
+class TestCSVExtractorDelimiter:
+    def test_tab_delimited_file_routes_through_pipeline(self, tmp_path: Path):
+        """A TSV with duplicate column names must still trigger DUPLICATE_COLUMN_NAME."""
+        p = tmp_path / "tabs.csv"  # .csv suffix but tab-delimited content
+        p.write_text(
+            "name\tname\tage\nAlice\tSmith\t30\nBob\tJones\t25\n",
+            encoding="utf-8",
+        )
+        env = CSVExtractor().extract(p)
+        codes = [w["code"] for w in env["warnings"]]
+        # The dialect sniffer should detect tab, the raw-header reader
+        # should split on tab, and DUPLICATE_COLUMN_NAME should fire.
+        assert env["schema"]["delimiter"] == "\t", (
+            f"expected tab delimiter, got {env['schema']['delimiter']!r}"
+        )
+        assert "DUPLICATE_COLUMN_NAME" in codes, (
+            f"expected DUPLICATE_COLUMN_NAME, got {codes}"
+        )
+        # Pandas should produce 3 columns, not 1.
+        assert len(env["schema"]["columns"]) == 3
