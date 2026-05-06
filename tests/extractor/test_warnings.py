@@ -140,6 +140,16 @@ class TestRepeatingEntity:
         col = {"name": "score", "dtype": "integer", "unique_count": 5}
         assert check_repeating_entity(column=col, row_count=250) is None
 
+    def test_silent_at_05_boundary(self):
+        # ratio = 125 / 250 = 0.5 exactly → silent (rule fires only on < 0.5).
+        col = {"name": "id", "dtype": "string", "unique_count": 125}
+        assert check_repeating_entity(column=col, row_count=250) is None
+
+    def test_silent_on_zero_unique(self):
+        # All-null string column has unique_count == 0; must not crash.
+        col = {"name": "comment", "dtype": "string", "unique_count": 0}
+        assert check_repeating_entity(column=col, row_count=100) is None
+
 
 class TestNumericColumnQuoteRisk:
     def test_fires_on_integer(self):
