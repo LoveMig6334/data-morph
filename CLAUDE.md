@@ -29,13 +29,13 @@ When touching training or inference code:
 - Don't hardcode `mlx` imports or Apple-only paths at the top level.
 - Isolate framework code behind an abstraction (`src/models/backend.py` style) with an MLX implementation and a PyTorch + Unsloth fallback for Colab/Windows.
 - If asked to run actual fine-tuning on this Windows box before 2026-04-30, stop and confirm — the plan's fallback is **Google Colab + PyTorch + Unsloth**, not local Windows training.
-- When the Mac arrives: make a **fresh** `.venv` on macOS (same Python 3.11) and re-install from `requirements.txt`. Don't try to sync venvs across OSes.
+- When the Mac arrives: make a **fresh** `.venv` on macOS (same Python 3.12) and re-install from the lockfile (`uv sync`). Don't try to sync venvs across OSes.
 
 ## Environment
 
-- **Python 3.11** (venv at `.venv/`). Don't regenerate with a different version without asking — Gemma/MLX/Unsloth wheel compatibility depends on 3.11.
+- **Python 3.12** (venv at `.venv/`, managed by `uv`). We landed on 3.12 because **MLX support is stronger on 3.12 than 3.11**. Don't regenerate with a different version without asking.
 - Activate: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (mac).
-- Install: `pip install -r requirements.txt`.
+- Install / sync: `uv sync` (resolves from `pyproject.toml` + `uv.lock`). Add new deps with `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only).
 
 ## Folder conventions
 

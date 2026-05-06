@@ -48,12 +48,10 @@ multi-row entities. Both are concrete capabilities the student must learn.
 
 - **Behind schedule** — W3 + W4 still owed. Cutting advanced use cases
   is preferable to cutting deployment per the plan's risk register.
-- **Python version drift — UNRESOLVED** — `.venv` runs **3.12.13**,
-  `.python-version` says `3.12`, `pyproject.toml` pins `>=3.12`, but
-  `CLAUDE.md` and `docs/W2_baseline.md` still say **3.11** for
-  Gemma/MLX/Unsloth wheels. Either rebuild the venv at 3.11, or update
-  CLAUDE.md to accept 3.12 and re-verify wheel availability for MLX +
-  Unsloth on macOS Python 3.12 before W5.
+- **MLX/Unsloth wheel verification (W5)** — Project standardized on
+  **Python 3.12** (decision: MLX support is stronger on 3.12). Before W5
+  starts, confirm Unsloth + MLX-LM wheels actually install on macOS
+  Python 3.12 — if not, the documented fallback is Colab + PyTorch + Unsloth.
 - **Test set is 15 cases** — plan calls for 50–100. Expand during W3.
 - **No Agent Skill in `claude -p`** — skill is referenced as a file. A future
   Anthropic Agent SDK pipeline would likely raise scores 5–15%.
@@ -66,13 +64,13 @@ multi-row entities. Both are concrete capabilities the student must learn.
 
 ## Next up
 
-1. **Decide the Python version**: stick with 3.12 (update CLAUDE.md +
-   W2 doc, verify MLX/Unsloth wheels), or rebuild venv at 3.11.
-2. Start W3: design the teacher pair-generation loop in `src/data/`,
+1. Start W3: design the teacher pair-generation loop in `src/data/`,
    write a verifier that gates every pair before it lands in
    `data/processed/`. Aim for ~50 pairs as a first batch, then scale.
-3. Expand the test set toward 50 cases (disjoint from training) and
+2. Expand the test set toward 50 cases (disjoint from training) and
    re-run the baseline to confirm scores hold on the larger set.
+3. Before W5, smoke-test `mlx-lm` + `unsloth` install + import on
+   the 3.12 venv. If either fails, switch to Colab fallback early.
 
 ---
 
@@ -80,6 +78,10 @@ multi-row entities. Both are concrete capabilities the student must learn.
 
 Append one bullet per session. Newest on top. Keep each entry under 2 lines.
 
+- **2026-05-06** — Standardized on **Python 3.12** (MLX support is
+  stronger). Updated `CLAUDE.md` env section + handoff note and
+  `docs/W2_baseline.md` accordingly; switched install instructions
+  from `pip install -r requirements.txt` to `uv sync` / `uv add`.
 - **2026-05-06** — Declared real deps in `pyproject.toml` (`pandas`
   runtime, `pytest` dev) via `uv add`; fixed placeholder description.
   All 28 metric tests pass on the 3.12 venv. Added a tracking rule to
