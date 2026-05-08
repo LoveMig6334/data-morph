@@ -11,6 +11,22 @@ from typing import Any
 
 import pandas as pd
 
+from .base import MetadataExtractor
+from .sampler import sample_csv
+from .warning_rules import (
+    MetadataWarning,
+    check_duplicate_column_name,
+    check_empty_file,
+    check_high_null_rate,
+    check_inconsistent_quoting,
+    check_latin1_fallback,
+    check_likely_date_column,
+    check_missing_header,
+    check_mixed_dtype_column,
+    check_numeric_column_quote_risk,
+    check_repeating_entity,
+)
+
 ENCODING_LADDER: tuple[str, ...] = ("utf-8-sig", "utf-8", "latin-1")
 SNIFF_SAMPLE_BYTES = 16 * 1024
 
@@ -188,7 +204,7 @@ def _try_date_column(values: list[str]) -> str | None:
             # If the whole thing is digits and starts with 0, reject.
             if s.isdigit() and len(s) > 1 and s.startswith("0"):
                 return None
-    parsed = pd.to_datetime(values, errors="coerce", format="mixed")
+    parsed = pd.to_datetime(pd.Series(values), errors="coerce", format="mixed")
     nat_rate = parsed.isna().sum() / len(values)
     if nat_rate >= 0.05:
         return None
@@ -276,23 +292,6 @@ def _coerce_samples(samples: list[str], dtype: str) -> list[Any]:
     if dtype == "boolean":
         return [v.lower() in ("true", "1", "yes") for v in samples]
     return list(samples)
-
-
-from .base import MetadataExtractor
-from .sampler import sample_csv
-from .warning_rules import (
-    MetadataWarning,
-    check_duplicate_column_name,
-    check_empty_file,
-    check_high_null_rate,
-    check_inconsistent_quoting,
-    check_latin1_fallback,
-    check_likely_date_column,
-    check_missing_header,
-    check_mixed_dtype_column,
-    check_numeric_column_quote_risk,
-    check_repeating_entity,
-)
 
 
 class CSVExtractor(MetadataExtractor):

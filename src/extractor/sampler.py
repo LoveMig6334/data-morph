@@ -7,7 +7,7 @@ loads the full file into memory.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -29,10 +29,13 @@ def sample_csv(
     if total_rows <= 0:
         return {"head": [], "middle": [], "tail": []}
 
+    def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
+        return cast("list[dict[str, Any]]", df.to_dict("records"))
+
     if total_rows <= head_n + middle_n + tail_n:
         head = pd.read_csv(file_path, nrows=total_rows, encoding=encoding, dtype=str)
         return {
-            "head": head.to_dict("records"),
+            "head": _records(head),
             "middle": [],
             "tail": [],
         }
@@ -43,7 +46,7 @@ def sample_csv(
     middle_start = total_rows // 2
     middle = pd.read_csv(
         file_path,
-        skiprows=range(1, middle_start + 1),
+        skiprows=list(range(1, middle_start + 1)),
         nrows=middle_n,
         encoding=encoding,
         dtype=str,
@@ -52,14 +55,14 @@ def sample_csv(
     # tail: skip everything but the last tail_n rows
     tail = pd.read_csv(
         file_path,
-        skiprows=range(1, total_rows - tail_n + 1),
+        skiprows=list(range(1, total_rows - tail_n + 1)),
         nrows=tail_n,
         encoding=encoding,
         dtype=str,
     )
 
     return {
-        "head": head.to_dict("records"),
-        "middle": middle.to_dict("records"),
-        "tail": tail.to_dict("records"),
+        "head": _records(head),
+        "middle": _records(middle),
+        "tail": _records(tail),
     }

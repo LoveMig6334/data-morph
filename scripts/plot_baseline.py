@@ -97,7 +97,7 @@ def plot_per_case_heatmap(summary: dict, out_path: Path) -> None:
     im = ax.imshow(matrix, cmap="RdYlGn", vmin=0, vmax=1, aspect="auto")
 
     ax.set_xticks(range(len(METRICS)))
-    ax.set_xticklabels([l.replace("\n", " ") for l in METRIC_LABELS], fontsize=9)
+    ax.set_xticklabels([lbl.replace("\n", " ") for lbl in METRIC_LABELS], fontsize=9)
     ax.set_yticks(range(len(case_ids)))
     ax.set_yticklabels(case_ids, fontsize=8)
 
