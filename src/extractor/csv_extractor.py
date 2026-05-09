@@ -129,9 +129,7 @@ def sniff_dialect(file_path: Path, *, encoding: str) -> dict[str, Any]:
     }
 
 
-def count_data_rows(
-    file_path: Path, *, encoding: str, has_header: bool
-) -> int:
+def count_data_rows(file_path: Path, *, encoding: str, has_header: bool) -> int:
     """Count non-blank data rows. Subtracts the header row if present."""
     try:
         with file_path.open("r", encoding=encoding) as f:
@@ -209,8 +207,7 @@ def _try_date_column(values: list[str]) -> str | None:
     if nat_rate >= 0.05:
         return None
     has_time = any(
-        (ts.hour, ts.minute, ts.second) != (0, 0, 0)
-        for ts in parsed.dropna()
+        (ts.hour, ts.minute, ts.second) != (0, 0, 0) for ts in parsed.dropna()
     )
     return "datetime" if has_time else "date"
 
@@ -319,17 +316,27 @@ class CSVExtractor(MetadataExtractor):
         file_size = file_path.stat().st_size
 
         encoding, attempted = detect_encoding(file_path)
-        _push(warnings, check_latin1_fallback(
-            final_encoding=encoding, attempted=attempted,
-        ))
+        _push(
+            warnings,
+            check_latin1_fallback(
+                final_encoding=encoding,
+                attempted=attempted,
+            ),
+        )
 
         # Empty file short-circuit.
         if file_size == 0:
             _push(warnings, check_empty_file(row_count=0))
             return self._envelope(
-                file_path, file_size, encoding, schema={
-                    "delimiter": ",", "quote_char": '"',
-                    "has_header": False, "row_count": 0, "columns": [],
+                file_path,
+                file_size,
+                encoding,
+                schema={
+                    "delimiter": ",",
+                    "quote_char": '"',
+                    "has_header": False,
+                    "row_count": 0,
+                    "columns": [],
                 },
                 samples={"head": [], "middle": [], "tail": []},
                 warnings=warnings,
@@ -337,21 +344,31 @@ class CSVExtractor(MetadataExtractor):
 
         dialect = sniff_dialect(file_path, encoding=encoding)
         _push(warnings, check_missing_header(has_header=dialect["has_header"]))
-        _push(warnings, check_inconsistent_quoting(
-            inconsistent=dialect["inconsistent_quoting"],
-        ))
+        _push(
+            warnings,
+            check_inconsistent_quoting(
+                inconsistent=dialect["inconsistent_quoting"],
+            ),
+        )
 
         row_count = count_data_rows(
-            file_path, encoding=encoding, has_header=dialect["has_header"],
+            file_path,
+            encoding=encoding,
+            has_header=dialect["has_header"],
         )
         _push(warnings, check_empty_file(row_count=row_count))
 
         if row_count == 0:
             return self._envelope(
-                file_path, file_size, encoding, schema={
-                    **{k: dialect[k] for k in
-                       ("delimiter", "quote_char", "has_header")},
-                    "row_count": 0, "columns": [],
+                file_path,
+                file_size,
+                encoding,
+                schema={
+                    **{
+                        k: dialect[k] for k in ("delimiter", "quote_char", "has_header")
+                    },
+                    "row_count": 0,
+                    "columns": [],
                 },
                 samples={"head": [], "middle": [], "tail": []},
                 warnings=warnings,
@@ -361,9 +378,7 @@ class CSVExtractor(MetadataExtractor):
         # pandas silently auto-renames them to 'name', 'name.1', etc.
         if dialect["has_header"]:
             with file_path.open("r", encoding=encoding, newline="") as f:
-                raw_header = next(
-                    csv.reader(f, delimiter=dialect["delimiter"]), []
-                )
+                raw_header = next(csv.reader(f, delimiter=dialect["delimiter"]), [])
             _push(warnings, check_duplicate_column_name(raw_header=raw_header))
 
         # Schema inference on a capped sample.
@@ -380,23 +395,29 @@ class CSVExtractor(MetadataExtractor):
 
         columns_meta: list[dict[str, Any]] = []
         for col_name in df.columns:
-            raw_values = [
-                "" if pd.isna(v) else str(v) for v in df[col_name].tolist()
-            ]
+            raw_values = ["" if pd.isna(v) else str(v) for v in df[col_name].tolist()]
             meta = build_column_metadata(
                 name=str(col_name),
                 values=raw_values,
                 sample_values_per_column=self.sample_values_per_column,
             )
             columns_meta.append(meta)
-            _push(warnings, check_repeating_entity(
-                column=meta, row_count=row_count,
-            ))
+            _push(
+                warnings,
+                check_repeating_entity(
+                    column=meta,
+                    row_count=row_count,
+                ),
+            )
             _push(warnings, check_numeric_column_quote_risk(column=meta))
             _push(warnings, check_mixed_dtype_column(column=meta))
-            _push(warnings, check_high_null_rate(
-                column=meta, row_count=row_count,
-            ))
+            _push(
+                warnings,
+                check_high_null_rate(
+                    column=meta,
+                    row_count=row_count,
+                ),
+            )
             _push(warnings, check_likely_date_column(column=meta))
 
         samples = sample_csv(
@@ -416,7 +437,12 @@ class CSVExtractor(MetadataExtractor):
             "columns": columns_meta,
         }
         return self._envelope(
-            file_path, file_size, encoding, schema, samples, warnings,
+            file_path,
+            file_size,
+            encoding,
+            schema,
+            samples,
+            warnings,
         )
 
     def _envelope(
@@ -440,9 +466,7 @@ class CSVExtractor(MetadataExtractor):
         }
 
 
-def _push(
-    bucket: list[MetadataWarning], maybe: MetadataWarning | None
-) -> None:
+def _push(bucket: list[MetadataWarning], maybe: MetadataWarning | None) -> None:
     if maybe is not None:
         bucket.append(maybe)
 
@@ -456,15 +480,21 @@ def _main() -> int:
     )
     parser.add_argument("file", type=Path, help="Path to a .csv file")
     parser.add_argument(
-        "--head-n", type=int, default=3,
+        "--head-n",
+        type=int,
+        default=3,
         help="Number of rows to sample from the head (default: 3)",
     )
     parser.add_argument(
-        "--middle-n", type=int, default=1,
+        "--middle-n",
+        type=int,
+        default=1,
         help="Number of rows to sample from the middle (default: 1)",
     )
     parser.add_argument(
-        "--tail-n", type=int, default=1,
+        "--tail-n",
+        type=int,
+        default=1,
         help="Number of rows to sample from the tail (default: 1)",
     )
     args = parser.parse_args()
