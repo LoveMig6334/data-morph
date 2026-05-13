@@ -1,0 +1,9 @@
+Sales Report by Region
+----------------------
+Region       Sales  Units
+North        12500    25
+South        8900    18
+East         15200    31
+West         6700    14
+Total Sales: 43300
+Total Units: 88

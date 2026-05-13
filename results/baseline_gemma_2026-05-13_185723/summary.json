@@ -1,0 +1,327 @@
+{
+  "run_id": "baseline_gemma_2026-05-13_185723",
+  "generated_at": "2026-05-13T18:57:56",
+  "model": "mlx-community/gemma-2-2b-it (no fine-tune)",
+  "backend": "mlx",
+  "role": "student-base",
+  "aggregate": {
+    "overall": {
+      "format_validity": 0.933,
+      "schema_compliance": 0.8,
+      "loadability": 1.0,
+      "content_accuracy": 0.883
+    },
+    "by_use_case": {
+      "uc1_csv_to_json_nested": {
+        "n": 3,
+        "format_validity": 1.0,
+        "schema_compliance": 0.333,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "uc2_json_to_csv_flatten": {
+        "n": 3,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "uc3_txt_log_to_csv": {
+        "n": 3,
+        "format_validity": 0.667,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.583
+      },
+      "uc4_csv_to_txt_report": {
+        "n": 3,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "uc5_schema_migration": {
+        "n": 3,
+        "format_validity": 1.0,
+        "schema_compliance": 0.667,
+        "loadability": 1.0,
+        "content_accuracy": 0.833
+      }
+    },
+    "by_complexity": {
+      "simple": {
+        "n": 10,
+        "format_validity": 1.0,
+        "schema_compliance": 0.9,
+        "loadability": 1.0,
+        "content_accuracy": 0.95
+      },
+      "medium": {
+        "n": 5,
+        "format_validity": 0.8,
+        "schema_compliance": 0.6,
+        "loadability": 1.0,
+        "content_accuracy": 0.75
+      }
+    },
+    "n_cases": 15,
+    "n_inference_errors": 0
+  },
+  "cases": [
+    {
+      "case_id": "uc1_csv_to_json_nested/simple_01",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 5.45,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "[\n  {\n    \"user\": {\n      \"name\": \"Alice\",\n      \"email\": \"alice@example.com\"\n    },\n    \"orders\": [\n      {\n        \"id\": \"1001\",\n        \"item\": \"Widget\",\n        \"price\": 9.99\n      }\n    ]\n  },\n  "
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/simple_02",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 2.53,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "[\n  {\n    \"product\": {\n      \"name\": \"Red Shirt\",\n      \"sku\": \"RS-001\",\n      \"price\": 25.00\n    },\n    \"category\": {\n      \"name\": \"Apparel\",\n      \"code\": \"APR\"\n    }\n  },\n  {\n    \"product\": {\n    "
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/medium_01",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 6.85,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "[\n  {\n    \"user\": {\n      \"name\": \"Alice\",\n      \"email\": \"alice@example.com\",\n      \"orders\": [\n        {\n          \"id\": \"1001\",\n          \"item\": \"Widget\",\n          \"price\": 9.99\n        },\n      "
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/simple_01",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 0.53,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "name,address.city,address.zip\nAlice,NYC,10001\nBob,LA,90001\nCarol,Chicago,60601"
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/simple_02",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 0.63,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "name,price,specs.cpu,specs.ram_gb\nLaptop,999,M3,16\nPhone,799,A17,8\nTablet,599,M2,8"
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/medium_01",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 0.83,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "city,current.temp_c,current.humidity,current.wind.speed_kmh,current.wind.dir\nBangkok,32,78,12,SW\nTokyo,18,55,8,N\nReykjavik,2,88,35,NE"
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/simple_01",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 2.11,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "timestamp,level,source,message\n2026-04-15T10:23:45,INFO,app,Server started on port 8080\n2026-04-15T10:23:46,INFO,db,Connected to postgres\n2026-04-15T10:24:12,WARN,app,Slow query detected 1.2s\n2026-04-"
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/simple_02",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 1.83,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.5
+      },
+      "output_preview": "timestamp,level,source,message\n2026-04-15T08:00:00Z,INFO,[auth],User login success: alice\n2026-04-15T08:01:15Z,WARN,[auth],Invalid password attempt for bob\n2026-04-15T08:02:30Z,INFO,[auth],User logout"
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/medium_01",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "medium",
+      "input_format": "txt",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 2.26,
+      "scores": {
+        "format_validity": 0.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.25
+      },
+      "output_preview": "timestamp,level,source,message\n2026-04-15T09:00:01,com.example.api.UserController,\"GET /users returned 200\"\n2026-04-15T09:00:02,com.example.db.Pool,\"Acquired connection #7\"\n2026-04-15T09:00:02,com.exa"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/simple_01",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "txt",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 0.89,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "Sales Report by Region\n----------------------\nRegion       Sales  Units\nNorth        12500    25\nSouth        8900    18\nEast         15200    31\nWest         6700    14\nTotal Sales: 43300\nTotal Units"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/simple_02",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "txt",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 1.39,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "Student Grade Report\n--------------------\nStudent | Math | Science | English\n--------|------|---------|---------\nAlice   | 85   | 90      | 88\nBob     | 72   | 68      | 75\nCarol   | 95   | 98      | "
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/medium_01",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 1.89,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "Inventory Report\n-----------------\nProduct Details:\nproduct_id,name,quantity,unit_price,category\nP001,Widget,150,9.99,Hardware\nP002,Gadget,75,19.99,Electronics\nP003,Sprocket,200,4.50,Hardware\nP004,Doo"
+    },
+    {
+      "case_id": "uc5_schema_migration/simple_01",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 1.26,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "[\n  {\n    \"name\": \"Alice\",\n    \"email\": \"alice@example.com\",\n    \"age\": 30\n  },\n  {\n    \"name\": \"Bob\",\n    \"email\": \"bob@example.com\",\n    \"age\": 25\n  },\n  {\n    \"name\": \"Carol\",\n    \"email\": \"carol@e"
+    },
+    {
+      "case_id": "uc5_schema_migration/simple_02",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 0.39,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "name,city,age\nAlice,NYC,30\nBob,LA,25\nCarol,Chicago,42"
+    },
+    {
+      "case_id": "uc5_schema_migration/medium_01",
+      "use_case": "uc5_schema_migration",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "json",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 2.04,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 0.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.5
+      },
+      "output_preview": "{\n  \"users\": [\n    {\n      \"first\": \"Alice\",\n      \"last\": \"Smith\",\n      \"contact\": {\n        \"email\": \"alice@example.com\"\n      },\n      \"birth_year\": 1995\n    },\n    {\n      \"first\": \"Bob\",\n      \""
+    }
+  ]
+}

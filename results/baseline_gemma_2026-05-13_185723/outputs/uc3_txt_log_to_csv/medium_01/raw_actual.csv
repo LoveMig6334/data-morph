@@ -1,0 +1,6 @@
+timestamp,level,source,message
+2026-04-15T09:00:01,com.example.api.UserController,"GET /users returned 200"
+2026-04-15T09:00:02,com.example.db.Pool,"Acquired connection #7"
+2026-04-15T09:00:02,com.example.api.UserController,"Exception: NullPointerException at line 42"
+2026-04-15T09:00:03,com.example.cache.TTLManager,"Cache miss rate: 89 percent"
+2026-04-15T09:00:03,com.example.api.UserController,"Request completed in 1299ms"
