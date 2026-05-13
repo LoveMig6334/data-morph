@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "first": "Alice",
+      "last": "Smith",
+      "email": "alice@example.com",
+      "birth_year": 1995
+    },
+    {
+      "first": "Bob",
+      "last": "Jones",
+      "email": "bob@example.com",
+      "birth_year": 2000
+    },
+    {
+      "first": "Carol",
+      "last": "Lee",
+      "email": "carol@example.com",
+      "birth_year": 1983
+    }
+  ]
+}

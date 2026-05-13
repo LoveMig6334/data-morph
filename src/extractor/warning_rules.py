@@ -172,9 +172,7 @@ def check_numeric_column_quote_risk(
     )
 
 
-def check_mixed_dtype_column(
-    *, column: dict[str, Any]
-) -> MetadataWarning | None:
+def check_mixed_dtype_column(*, column: dict[str, Any]) -> MetadataWarning | None:
     """Fire `MIXED_DTYPE_COLUMN` (error) when a column contains multiple data types."""
     if column.get("dtype") != "mixed":
         return None
@@ -215,9 +213,7 @@ def check_high_null_rate(
     )
 
 
-def check_likely_date_column(
-    *, column: dict[str, Any]
-) -> MetadataWarning | None:
+def check_likely_date_column(*, column: dict[str, Any]) -> MetadataWarning | None:
     """Fire `LIKELY_DATE_COLUMN` (info) when a column is detected as date or datetime type."""
     dtype = column.get("dtype")
     if dtype not in ("date", "datetime"):

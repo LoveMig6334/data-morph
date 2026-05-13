@@ -1,0 +1,14 @@
+{
+  "model_id": "mlx-community/gemma-2-2b-it",
+  "n_prompt_tokens": 854,
+  "n_generated_tokens": 53,
+  "tokens_per_sec": 64.36,
+  "elapsed_sec": 0.82,
+  "truncated": false,
+  "cleanup_applied": [
+    "strip_code_fence"
+  ],
+  "raw_size_bytes": 90,
+  "cleaned_size_bytes": 78,
+  "stderr": null
+}

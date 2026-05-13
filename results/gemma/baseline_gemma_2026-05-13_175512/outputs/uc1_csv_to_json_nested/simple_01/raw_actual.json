@@ -1,0 +1,45 @@
+{
+  "users": [
+    {
+      "name": "Alice",
+      "email": "alice@example.com"
+    },
+    {
+      "name": "Bob",
+      "email": "bob@example.com"
+    },
+    {
+      "name": "Carol",
+      "email": "carol@example.com"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1001,
+      "items": [
+        {
+          "name": "Widget",
+          "price": 9.99
+        }
+      ]
+    },
+    {
+      "id": 1002,
+      "items": [
+        {
+          "name": "Gadget",
+          "price": 19.99
+        }
+      ]
+    },
+    {
+      "id": 1003,
+      "items": [
+        {
+          "name": "Thingamajig",
+          "price": 4.50
+        }
+      ]
+    }
+  ]
+}

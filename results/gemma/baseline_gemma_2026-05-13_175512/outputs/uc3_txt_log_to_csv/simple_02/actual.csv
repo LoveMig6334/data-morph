@@ -1,0 +1,6 @@
+timestamp,level,source,message
+2026-04-15T08:00:00Z,INFO,auth,User login success: alice
+2026-04-15T08:01:15Z,WARN,auth,Invalid password attempt for bob
+2026-04-15T08:02:30Z,INFO,auth,User logout: alice
+2026-04-15T08:05:41Z,ERROR,payment,Stripe webhook failed: timeout
+2026-04-15T08:06:00Z,INFO,payment,Retry scheduled

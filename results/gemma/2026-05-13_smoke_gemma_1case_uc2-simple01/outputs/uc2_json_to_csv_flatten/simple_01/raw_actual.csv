@@ -1,0 +1,6 @@
+```csv
+name,address.city,address.zip
+Alice,NYC,10001
+Bob,LA,90001
+Carol,Chicago,60601
+```
