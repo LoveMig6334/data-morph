@@ -1,17 +1,3 @@
-"""Gemma 4 E2B IT (bf16) inference via mlx-vlm.
-
-Module-level singleton: load() is called once on the first generate() call;
-subsequent calls reuse the same model + processor. mlx-vlm imports are lazy
-(inside generate) so this module is importable on non-MLX machines without
-crashing — it only fails when generate() is actually invoked.
-
-Why mlx-vlm (not mlx-lm): Gemma 4's E2B variant is multimodal ("Any-to-Any"),
-shipped with a `language_model.*` prefix on its safetensors. mlx-lm is
-text-only and cannot strip that prefix, so it errors at load. mlx-vlm is
-the multimodal counterpart and knows how to dispatch on the wrapper; for
-our text-only inference path we pass `num_images=0` to `apply_chat_template`
-and no image/audio/video args to `generate`.
-"""
 from __future__ import annotations
 
 import time
@@ -55,9 +41,7 @@ def generate(messages: list[dict], max_tokens: int = 4096) -> GenerationResult:
     model = _state["model"]
     processor = _state["processor"]
 
-    prompt = apply_chat_template(
-        processor, model.config, messages, num_images=0
-    )
+    prompt = apply_chat_template(processor, model.config, messages, num_images=0)
 
     t0 = time.time()
     result = vlm_generate(
