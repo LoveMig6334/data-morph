@@ -39,7 +39,9 @@ def _ensure_loaded() -> None:
     from mlx_lm import load  # lazy import
 
     t0 = time.time()
-    model, tokenizer = load(MODEL_ID)
+    load_result = load(MODEL_ID)
+    model = load_result[0]
+    tokenizer = load_result[1]
     _state["model"] = model
     _state["tokenizer"] = tokenizer
     _state["load_sec"] = round(time.time() - t0, 2)
