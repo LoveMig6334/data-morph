@@ -151,10 +151,7 @@ def run_case(case: CaseSpec, outputs_dir: Path, model: str = "opus") -> CaseResu
 
     if not teacher_result.ok:
         result.ok = False
-        result.error = (
-            teacher_result.stderr[:500]
-            or "teacher returned empty output"
-        )
+        result.error = teacher_result.stderr[:500] or "teacher returned empty output"
         result.scores = {
             "format_validity": 0.0,
             "schema_compliance": 0.0,
@@ -177,9 +174,16 @@ def run_case(case: CaseSpec, outputs_dir: Path, model: str = "opus") -> CaseResu
 def aggregate(results: list[CaseResult]) -> dict[str, Any]:
     if not results:
         return {}
-    metric_keys = ["format_validity", "schema_compliance", "loadability", "content_accuracy"]
-    overall = {k: round(sum(r.scores.get(k, 0.0) for r in results) / len(results), 3)
-               for k in metric_keys}
+    metric_keys = [
+        "format_validity",
+        "schema_compliance",
+        "loadability",
+        "content_accuracy",
+    ]
+    overall = {
+        k: round(sum(r.scores.get(k, 0.0) for r in results) / len(results), 3)
+        for k in metric_keys
+    }
 
     by_uc: dict[str, dict[str, Any]] = {}
     for r in results:

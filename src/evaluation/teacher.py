@@ -24,7 +24,7 @@ class TeacherResult:
     raw_payload: dict
     returncode: int
     stderr: str
-    raw_output: str = ""          # pre-cleanup; equals `output` for Opus path
+    raw_output: str = ""  # pre-cleanup; equals `output` for Opus path
     gemma_meta: dict | None = None  # Gemma-only inference metadata
     cleanup_applied: list[str] = field(default_factory=list)
 

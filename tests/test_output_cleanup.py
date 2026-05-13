@@ -1,7 +1,7 @@
 """Tests for src.evaluation.output_cleanup.clean_model_output."""
+
 from __future__ import annotations
 
-import pytest
 
 from src.evaluation.output_cleanup import clean_model_output
 
@@ -28,7 +28,7 @@ def test_strip_csv_code_fence_drops_trailing_prose():
 
 
 def test_strip_json_preamble():
-    raw = "Here is the output:\n[{\"x\":1}]"
+    raw = 'Here is the output:\n[{"x":1}]'
     cleaned, applied = clean_model_output(raw, "json")
     assert cleaned == '[{"x":1}]'
     assert "strip_preamble" in applied
