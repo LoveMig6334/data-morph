@@ -1,9 +1,10 @@
-"""CLI entry: run the Claude Opus baseline across every test case.
+"""CLI entry: run the baseline across every test case.
 
 Usage (from project root):
     python scripts/run_baseline.py
-    python scripts/run_baseline.py --limit 3     # quick smoke-test
-    python scripts/run_baseline.py --only uc1    # filter by use case prefix
+    python scripts/run_baseline.py --model gemma  # student baseline
+    python scripts/run_baseline.py --limit 3      # quick smoke-test
+    python scripts/run_baseline.py --only uc1     # filter by use case prefix
 """
 
 from __future__ import annotations
@@ -32,6 +33,12 @@ def main() -> int:
                         help="Run only the first N cases (for smoke-testing).")
     parser.add_argument("--only", default=None,
                         help="Substring filter on use-case directory name.")
+    parser.add_argument(
+        "--model",
+        choices=["opus", "gemma"],
+        default="opus",
+        help="Inference backend (default: opus, the W2 teacher baseline).",
+    )
     args = parser.parse_args()
 
     test_root = PROJECT_ROOT / args.test_root
@@ -45,25 +52,34 @@ def main() -> int:
         return 1
 
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    run_dir = PROJECT_ROOT / args.results_dir / f"baseline_{stamp}"
+    run_dir = PROJECT_ROOT / args.results_dir / f"baseline_{args.model}_{stamp}"
     outputs_dir = run_dir / "outputs"
     outputs_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Running {len(cases)} cases. Results -> {run_dir}")
+    print(f"Running {len(cases)} cases (model={args.model}). Results -> {run_dir}")
     per_case = []
     for idx, case in enumerate(cases, 1):
         print(f"  [{idx:2d}/{len(cases)}] {case.case_id} ... ", end="", flush=True)
-        result = run_case(case, outputs_dir)
+        result = run_case(case, outputs_dir, model=args.model)
         status = "OK" if result.ok else "FAIL"
         mv = result.scores.get("format_validity", 0.0)
         ca = result.scores.get("content_accuracy", 0.0)
         print(f"{status}  fv={mv:.2f} ca={ca:.2f}  ({result.elapsed_sec}s)")
         per_case.append(result)
 
+    backend = "claude-cli" if args.model == "opus" else "mlx"
+    role = "teacher" if args.model == "opus" else "student-base"
+    model_label = (
+        "claude -p --model opus (Claude Code subscription)"
+        if args.model == "opus"
+        else "mlx-community/gemma-2-2b-it (no fine-tune)"
+    )
     summary = {
-        "run_id": f"baseline_{stamp}",
+        "run_id": f"baseline_{args.model}_{stamp}",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "teacher": "claude -p --model opus (Claude Code subscription)",
+        "model": model_label,
+        "backend": backend,
+        "role": role,
         "aggregate": aggregate(per_case),
         "cases": [
             {
@@ -88,7 +104,8 @@ def main() -> int:
     print()
     agg = summary["aggregate"]
     print("=== Aggregate ===")
-    print(f"  n_cases: {agg['n_cases']}   teacher_errors: {agg['n_teacher_errors']}")
+    n_err = agg.get("n_inference_errors", agg.get("n_teacher_errors", 0))
+    print(f"  n_cases: {agg['n_cases']}   inference_errors: {n_err}")
     print("  overall:")
     for k, v in agg["overall"].items():
         print(f"    {k:18s} {v:.3f}")
