@@ -1,17 +1,3 @@
-"""Gemma 2 2B IT (bf16) inference via MLX.
-
-Module-level singleton: load() is called once on the first generate() call;
-subsequent calls reuse the same model + tokenizer. mlx_lm imports are lazy
-(inside generate) so this module is importable on non-MLX machines without
-crashing — it only fails when generate() is actually invoked.
-
-Why Gemma 2 (not Gemma 4): the Gemma 4 family has no text-only 2B variant —
-E2B and E4B are multimodal ("Any-to-Any") and mlx-lm can't load them because
-their safetensors are prefixed `language_model.*` (multimodal wrapper) which
-mlx-lm doesn't strip. Gemma 2 2B IT is text-only, true 2B, and matches the
-project plan's stated student-model target.
-"""
-
 from __future__ import annotations
 
 import time
