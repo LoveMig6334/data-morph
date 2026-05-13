@@ -7,6 +7,7 @@ stored on disk as `raw_actual.<fmt>` so any cleanup mistake is auditable.
 
 Returns: (cleaned_text, list_of_steps_that_fired)
 """
+
 from __future__ import annotations
 
 import re
@@ -123,5 +124,7 @@ def _try_strip_trailing_prose_json(text: str) -> str | None:
     if end == len(text):
         return None  # nothing to strip
     if text[end:].strip() == "":
-        return None  # only whitespace remains, not prose — defer to final strip_whitespace
+        return (
+            None  # only whitespace remains, not prose — defer to final strip_whitespace
+        )
     return text[:end]

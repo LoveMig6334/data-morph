@@ -40,6 +40,7 @@ class TestMetadataWarning:
 
     def test_is_frozen(self):
         import dataclasses
+
         w = MetadataWarning(code="X", severity="warn", message="m", context={})
         with pytest.raises(dataclasses.FrozenInstanceError):
             w.code = "Y"  # type: ignore[misc]

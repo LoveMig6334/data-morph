@@ -16,7 +16,12 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 METRICS = ["format_validity", "schema_compliance", "loadability", "content_accuracy"]
-METRIC_LABELS = ["Format\nValidity", "Schema\nCompliance", "Loadability", "Content\nAccuracy"]
+METRIC_LABELS = [
+    "Format\nValidity",
+    "Schema\nCompliance",
+    "Loadability",
+    "Content\nAccuracy",
+]
 METRIC_COLORS = ["#4C78A8", "#F58518", "#54A24B", "#E45756"]
 
 
@@ -37,7 +42,9 @@ def plot_overall(summary: dict, out_path: Path) -> None:
     values = [overall[m] for m in METRICS]
 
     fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar(METRIC_LABELS, values, color=METRIC_COLORS, edgecolor="black", linewidth=0.8)
+    bars = ax.bar(
+        METRIC_LABELS, values, color=METRIC_COLORS, edgecolor="black", linewidth=0.8
+    )
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("Score (0.0 - 1.0)")
     model_label = summary.get("model") or summary.get("teacher", "unknown")
@@ -54,11 +61,24 @@ def plot_overall(summary: dict, out_path: Path) -> None:
         fontsize=11,
     )
     ax.axhline(0.8, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
-    ax.text(3.55, 0.81, "80% target\nfor student", fontsize=8, color="gray",
-            va="bottom", ha="right")
+    ax.text(
+        3.55,
+        0.81,
+        "80% target\nfor student",
+        fontsize=8,
+        color="gray",
+        va="bottom",
+        ha="right",
+    )
     for bar, v in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, v + 0.015,
-                f"{v:.3f}", ha="center", fontsize=10, fontweight="bold")
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            v + 0.015,
+            f"{v:.3f}",
+            ha="center",
+            fontsize=10,
+            fontweight="bold",
+        )
     ax.grid(axis="y", alpha=0.3, linestyle=":")
     ax.set_axisbelow(True)
     fig.tight_layout()
@@ -76,15 +96,24 @@ def plot_by_use_case(summary: dict, out_path: Path) -> None:
     for i, (m, label, color) in enumerate(zip(METRICS, METRIC_LABELS, METRIC_COLORS)):
         values = [by_uc[u][m] for u in ucs]
         offset = (i - 1.5) * width
-        ax.bar(x + offset, values, width, label=label.replace("\n", " "),
-               color=color, edgecolor="black", linewidth=0.5)
+        ax.bar(
+            x + offset,
+            values,
+            width,
+            label=label.replace("\n", " "),
+            color=color,
+            edgecolor="black",
+            linewidth=0.5,
+        )
 
     ax.set_ylim(0, 1.1)
     ax.set_ylabel("Score (0.0 - 1.0)")
     ax.set_title("Baseline scores by use case", fontsize=11)
     ax.set_xticks(x)
     # shorten uc names for display
-    short = [u.replace("_", " ").replace("uc", "UC").split(maxsplit=1)[-1][:24] for u in ucs]
+    short = [
+        u.replace("_", " ").replace("uc", "UC").split(maxsplit=1)[-1][:24] for u in ucs
+    ]
     ax.set_xticklabels(short, rotation=15, ha="right", fontsize=9)
     ax.axhline(0.8, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
     ax.legend(loc="lower right", fontsize=8, ncol=2)
@@ -111,9 +140,16 @@ def plot_per_case_heatmap(summary: dict, out_path: Path) -> None:
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
             v = matrix[i, j]
-            ax.text(j, i, f"{v:.2f}", ha="center", va="center",
-                    color="black" if 0.35 < v < 0.85 else "white",
-                    fontsize=8, fontweight="bold")
+            ax.text(
+                j,
+                i,
+                f"{v:.2f}",
+                ha="center",
+                va="center",
+                color="black" if 0.35 < v < 0.85 else "white",
+                fontsize=8,
+                fontweight="bold",
+            )
 
     ax.set_title("Per-case scores — green = pass, red = fail", fontsize=11)
     cbar = fig.colorbar(im, ax=ax, shrink=0.7)

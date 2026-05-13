@@ -60,20 +60,26 @@ class TestCountDataRows:
     def test_with_header(self):
         # simple_users.csv has 5 data rows + 1 header row.
         n = count_data_rows(
-            FIXTURES / "simple_users.csv", encoding="utf-8", has_header=True,
+            FIXTURES / "simple_users.csv",
+            encoding="utf-8",
+            has_header=True,
         )
         assert n == 5
 
     def test_without_header(self):
         # headerless.csv has 5 rows, no header.
         n = count_data_rows(
-            FIXTURES / "headerless.csv", encoding="utf-8", has_header=False,
+            FIXTURES / "headerless.csv",
+            encoding="utf-8",
+            has_header=False,
         )
         assert n == 5
 
     def test_empty_file(self):
         n = count_data_rows(
-            FIXTURES / "empty_file.csv", encoding="utf-8", has_header=True,
+            FIXTURES / "empty_file.csv",
+            encoding="utf-8",
+            has_header=True,
         )
         assert n == 0
 
@@ -111,9 +117,10 @@ class TestInferColumnDtype:
         assert infer_column_dtype(["2026-01-15", "2026-02-20"]) == "date"
 
     def test_datetime_iso(self):
-        assert infer_column_dtype(
-            ["2026-01-15T10:30:00", "2026-02-20T14:45:00"]
-        ) == "datetime"
+        assert (
+            infer_column_dtype(["2026-01-15T10:30:00", "2026-02-20T14:45:00"])
+            == "datetime"
+        )
 
     def test_date_us(self):
         assert infer_column_dtype(["01/15/2026", "02/20/2026"]) == "date"
@@ -128,7 +135,9 @@ class TestInferColumnDtype:
 class TestBuildColumnMetadata:
     def test_integer_column_includes_min_max(self):
         m = build_column_metadata(
-            name="id", values=["1", "5", "3"], sample_values_per_column=3,
+            name="id",
+            values=["1", "5", "3"],
+            sample_values_per_column=3,
         )
         assert m["name"] == "id"
         assert m["dtype"] == "integer"
@@ -139,14 +148,17 @@ class TestBuildColumnMetadata:
 
     def test_float_column_includes_min_max(self):
         m = build_column_metadata(
-            name="price", values=["9.99", "25.00"], sample_values_per_column=3,
+            name="price",
+            values=["9.99", "25.00"],
+            sample_values_per_column=3,
         )
         assert m["min"] == 9.99
         assert m["max"] == 25.00
 
     def test_string_column_includes_max_length(self):
         m = build_column_metadata(
-            name="name", values=["Al", "Bob", "Carol"],
+            name="name",
+            values=["Al", "Bob", "Carol"],
             sample_values_per_column=3,
         )
         assert m["max_length"] == 5  # "Carol"
@@ -155,14 +167,17 @@ class TestBuildColumnMetadata:
 
     def test_null_handling(self):
         m = build_column_metadata(
-            name="x", values=["1", "", "3"], sample_values_per_column=3,
+            name="x",
+            values=["1", "", "3"],
+            sample_values_per_column=3,
         )
         assert m["null_count"] == 1
         assert m["unique_count"] == 2
 
     def test_sample_values_capped(self):
         m = build_column_metadata(
-            name="x", values=["a", "b", "c", "d", "e"],
+            name="x",
+            values=["a", "b", "c", "d", "e"],
             sample_values_per_column=3,
         )
         assert len(m["sample_values"]) == 3
@@ -194,9 +209,7 @@ class TestCSVExtractorEnvelope:
 class TestCSVExtractorWarnings:
     def test_simple_users_clean_baseline(self):
         env = CSVExtractor().extract(FIXTURES / "simple_users.csv")
-        assert _codes(env) == [], (
-            f"expected no warnings, got {env['warnings']}"
-        )
+        assert _codes(env) == [], f"expected no warnings, got {env['warnings']}"
 
     def test_repeating_entity_fixture_fires_expected_codes(self):
         env = CSVExtractor().extract(FIXTURES / "repeating_entity.csv")

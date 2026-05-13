@@ -64,8 +64,12 @@ class TestSampleCSV:
         path = tmp_path / "ten.csv"
         _write_csv(path, [["x"]] + [[str(i)] for i in range(10)])
         s = sample_csv(
-            path, total_rows=10, encoding="utf-8",
-            head_n=2, middle_n=2, tail_n=2,
+            path,
+            total_rows=10,
+            encoding="utf-8",
+            head_n=2,
+            middle_n=2,
+            tail_n=2,
         )
         assert len(s["head"]) == 2
         assert len(s["middle"]) == 2

@@ -29,10 +29,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--test-root", default="data/test_set")
     parser.add_argument("--results-dir", default="results")
-    parser.add_argument("--limit", type=int, default=None,
-                        help="Run only the first N cases (for smoke-testing).")
-    parser.add_argument("--only", default=None,
-                        help="Substring filter on use-case directory name.")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Run only the first N cases (for smoke-testing).",
+    )
+    parser.add_argument(
+        "--only", default=None, help="Substring filter on use-case directory name."
+    )
     parser.add_argument(
         "--model",
         choices=["opus", "gemma"],
@@ -111,11 +116,13 @@ def main() -> int:
         print(f"    {k:18s} {v:.3f}")
     print("  by complexity:")
     for c, s in agg["by_complexity"].items():
-        print(f"    {c:8s} n={s['n']}  "
-              f"fv={s['format_validity']:.2f}  "
-              f"sc={s['schema_compliance']:.2f}  "
-              f"ld={s['loadability']:.2f}  "
-              f"ca={s['content_accuracy']:.2f}")
+        print(
+            f"    {c:8s} n={s['n']}  "
+            f"fv={s['format_validity']:.2f}  "
+            f"sc={s['schema_compliance']:.2f}  "
+            f"ld={s['loadability']:.2f}  "
+            f"ca={s['content_accuracy']:.2f}"
+        )
     print(f"\nFull summary -> {summary_path}")
     return 0
 
