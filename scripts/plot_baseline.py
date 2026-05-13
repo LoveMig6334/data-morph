@@ -40,10 +40,17 @@ def plot_overall(summary: dict, out_path: Path) -> None:
     bars = ax.bar(METRIC_LABELS, values, color=METRIC_COLORS, edgecolor="black", linewidth=0.8)
     ax.set_ylim(0, 1.05)
     ax.set_ylabel("Score (0.0 - 1.0)")
+    model_label = summary.get("model") or summary.get("teacher", "unknown")
+    role = summary.get("role", "teacher")
+    n_err = (
+        summary["aggregate"].get("n_inference_errors")
+        if "n_inference_errors" in summary["aggregate"]
+        else summary["aggregate"].get("n_teacher_errors", 0)
+    )
     ax.set_title(
-        f"Claude Opus baseline — overall scores\n"
+        f"{model_label}  ({role}) — overall scores\n"
         f"n={summary['aggregate']['n_cases']} cases, "
-        f"{summary['aggregate']['n_teacher_errors']} teacher errors",
+        f"{n_err} inference errors",
         fontsize=11,
     )
     ax.axhline(0.8, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
