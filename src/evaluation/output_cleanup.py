@@ -1,13 +1,3 @@
-"""Heuristic cleanup for student-model output.
-
-Gemma base will often wrap output in code fences or add prose preambles
-despite explicit instructions. These steps are *opportunistic*: if a step
-would damage content (e.g. unclosed fence), it skips. The raw text is also
-stored on disk as `raw_actual.<fmt>` so any cleanup mistake is auditable.
-
-Returns: (cleaned_text, list_of_steps_that_fired)
-"""
-
 from __future__ import annotations
 
 import re

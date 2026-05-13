@@ -1,15 +1,3 @@
-"""Four evaluation metrics for file-format conversion outputs.
-
-All functions are pure: they take strings (not paths), return floats in [0.0, 1.0],
-and do not touch the filesystem or network. This makes them unit-testable.
-
-Metrics (per the AI Builders 2026 project plan):
-    1. format_validity      — output is a valid file in the target format
-    2. schema_compliance    — output matches expected structure (keys / columns)
-    3. loadability          — pandas can consume the output
-    4. content_accuracy     — field-level / substring match against expected
-"""
-
 from __future__ import annotations
 
 import csv
@@ -17,9 +5,7 @@ import io
 import json
 from typing import Any, Iterable
 
-# ---------------------------------------------------------------------------
 # 1. Format validity
-# ---------------------------------------------------------------------------
 
 
 def format_validity(output: str, output_format: str) -> float:
@@ -51,9 +37,7 @@ def format_validity(output: str, output_format: str) -> float:
     raise ValueError(f"Unknown output_format: {output_format!r}")
 
 
-# ---------------------------------------------------------------------------
 # 2. Schema compliance
-# ---------------------------------------------------------------------------
 
 
 def _json_key_skeleton(obj: Any) -> Any:
@@ -103,9 +87,7 @@ def schema_compliance(actual: str, expected: str, output_format: str) -> float:
     raise ValueError(f"Unknown output_format: {output_format!r}")
 
 
-# ---------------------------------------------------------------------------
 # 3. Loadability
-# ---------------------------------------------------------------------------
 
 
 def loadability(output: str, output_format: str) -> float:
@@ -144,9 +126,7 @@ def loadability(output: str, output_format: str) -> float:
     raise ValueError(f"Unknown output_format: {output_format!r}")
 
 
-# ---------------------------------------------------------------------------
 # 4. Content accuracy
-# ---------------------------------------------------------------------------
 
 
 def _values_equal(a: Any, b: Any) -> bool:
@@ -264,9 +244,7 @@ def content_accuracy(
     raise ValueError(f"Unknown output_format: {output_format!r}")
 
 
-# ---------------------------------------------------------------------------
 # Aggregate helper
-# ---------------------------------------------------------------------------
 
 
 def score_all(
