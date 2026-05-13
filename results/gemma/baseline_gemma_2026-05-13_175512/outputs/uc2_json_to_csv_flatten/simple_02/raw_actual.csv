@@ -1,0 +1,6 @@
+```csv
+name,price,specs
+Laptop,999,cpu=M3,ram_gb=16
+Phone,799,cpu=A17,ram_gb=8
+Tablet,599,cpu=M2,ram_gb=8
+```

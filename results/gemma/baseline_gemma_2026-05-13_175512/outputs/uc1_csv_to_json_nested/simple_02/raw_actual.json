@@ -1,0 +1,31 @@
+{
+  "products": [
+    {
+      "product": "Red Shirt",
+      "sku": "RS-001",
+      "price": 25.00,
+      "category": {
+        "name": "Apparel",
+        "code": "APR"
+      }
+    },
+    {
+      "product": "Blue Jeans",
+      "sku": "BJ-101",
+      "price": 50.00,
+      "category": {
+        "name": "Apparel",
+        "code": "APR"
+      }
+    },
+    {
+      "product": "Coffee Mug",
+      "sku": "CM-900",
+      "price": 8.50,
+      "category": {
+        "name": "Kitchen",
+        "code": "KIT"
+      }
+    }
+  ]
+}

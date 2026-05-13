@@ -1,0 +1,54 @@
+{
+  "run_id": "baseline_gemma_2026-05-13_175349",
+  "generated_at": "2026-05-13T17:53:51",
+  "model": "mlx-community/gemma-2-2b-it (no fine-tune)",
+  "backend": "mlx",
+  "role": "student-base",
+  "aggregate": {
+    "overall": {
+      "format_validity": 1.0,
+      "schema_compliance": 1.0,
+      "loadability": 1.0,
+      "content_accuracy": 1.0
+    },
+    "by_use_case": {
+      "uc2_json_to_csv_flatten": {
+        "n": 1,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      }
+    },
+    "by_complexity": {
+      "simple": {
+        "n": 1,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      }
+    },
+    "n_cases": 1,
+    "n_inference_errors": 0
+  },
+  "cases": [
+    {
+      "case_id": "uc2_json_to_csv_flatten/simple_01",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "ok": true,
+      "error": null,
+      "elapsed_sec": 2.2,
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "output_preview": "name,address.city,address.zip\nAlice,NYC,10001\nBob,LA,90001\nCarol,Chicago,60601"
+    }
+  ]
+}
