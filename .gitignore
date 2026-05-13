@@ -45,6 +45,9 @@ models/*
 .env.*
 !.env.example
 
+# Claude Code project instructions (local)
+CLAUDE.md
+
 # Logs
 *.log
 logs/
