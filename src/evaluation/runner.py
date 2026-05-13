@@ -85,7 +85,7 @@ def discover_cases(test_root: Path) -> list[CaseSpec]:
     return cases
 
 
-def run_case(case: CaseSpec, outputs_dir: Path) -> CaseResult:
+def run_case(case: CaseSpec, outputs_dir: Path, model: str = "opus") -> CaseResult:
     meta = case.meta
     result = CaseResult(
         case_id=case.case_id,
@@ -100,6 +100,7 @@ def run_case(case: CaseSpec, outputs_dir: Path) -> CaseResult:
         input_format=meta["input_format"],
         output_format=meta["output_format"],
         prompt_hint=meta.get("prompt_hint", ""),
+        model=model,
     )
     result.elapsed_sec = round(time.time() - started, 2)
 
@@ -107,20 +108,44 @@ def run_case(case: CaseSpec, outputs_dir: Path) -> CaseResult:
     case_out_dir = outputs_dir / case.case_dir.parent.name / case.case_dir.name
     case_out_dir.mkdir(parents=True, exist_ok=True)
     out_ext = EXT_BY_FORMAT[meta["output_format"]]
+
+    # Cleaned (or for Opus, unchanged) output — what the metrics score.
     (case_out_dir / f"actual{out_ext}").write_text(
         teacher_result.output, encoding="utf-8"
     )
+    # For Gemma: also persist the raw pre-cleanup output for audit.
+    if model == "gemma":
+        (case_out_dir / f"raw_actual{out_ext}").write_text(
+            teacher_result.raw_output, encoding="utf-8"
+        )
+
+    # Per-backend metadata; filename kept as teacher_meta.json for artefact parity.
+    if model == "opus":
+        meta_payload: dict[str, Any] = {
+            "returncode": teacher_result.returncode,
+            "stderr": teacher_result.stderr[:1000],
+            "usage": teacher_result.raw_payload.get("usage"),
+            "session_id": teacher_result.raw_payload.get("session_id"),
+            "elapsed_sec": result.elapsed_sec,
+        }
+    else:  # gemma
+        gm = teacher_result.gemma_meta or {}
+        raw_bytes = len(teacher_result.raw_output.encode("utf-8"))
+        clean_bytes = len(teacher_result.output.encode("utf-8"))
+        meta_payload = {
+            "model_id": gm.get("model_id"),
+            "n_prompt_tokens": gm.get("n_prompt_tokens"),
+            "n_generated_tokens": gm.get("n_generated_tokens"),
+            "tokens_per_sec": gm.get("tokens_per_sec"),
+            "elapsed_sec": gm.get("elapsed_sec", result.elapsed_sec),
+            "truncated": gm.get("truncated", False),
+            "cleanup_applied": teacher_result.cleanup_applied,
+            "raw_size_bytes": raw_bytes,
+            "cleaned_size_bytes": clean_bytes,
+            "stderr": teacher_result.stderr[:1000] or None,
+        }
     (case_out_dir / "teacher_meta.json").write_text(
-        json.dumps(
-            {
-                "returncode": teacher_result.returncode,
-                "stderr": teacher_result.stderr[:1000],
-                "usage": teacher_result.raw_payload.get("usage"),
-                "session_id": teacher_result.raw_payload.get("session_id"),
-                "elapsed_sec": result.elapsed_sec,
-            },
-            indent=2,
-        ),
+        json.dumps(meta_payload, indent=2),
         encoding="utf-8",
     )
 
@@ -185,5 +210,5 @@ def aggregate(results: list[CaseResult]) -> dict[str, Any]:
         "by_use_case": by_uc,
         "by_complexity": by_complexity,
         "n_cases": len(results),
-        "n_teacher_errors": sum(1 for r in results if not r.ok),
+        "n_inference_errors": sum(1 for r in results if not r.ok),
     }
