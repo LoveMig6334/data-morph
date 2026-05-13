@@ -74,6 +74,8 @@ def _try_strip_preamble(text: str, output_format: str) -> str | None:
         for i, line in enumerate(lines):
             if "," in line:
                 if i == 0:
+                    # First line already has a comma — likely a header; do not strip.
+                    # (Conservative: a prose preamble containing a comma will not be stripped.)
                     return None
                 return "\n".join(lines[i:])
         return None
@@ -120,4 +122,6 @@ def _try_strip_trailing_prose_json(text: str) -> str | None:
         return None
     if end == len(text):
         return None  # nothing to strip
+    if text[end:].strip() == "":
+        return None  # only whitespace remains, not prose — defer to final strip_whitespace
     return text[:end]
