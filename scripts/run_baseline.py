@@ -77,7 +77,7 @@ def main() -> int:
     model_label = (
         "claude -p --model opus (Claude Code subscription)"
         if args.model == "opus"
-        else "mlx-community/gemma-2-2b-it (no fine-tune)"
+        else "mlx-community/gemma-4-e2b-it-bf16 (no fine-tune)"
     )
     summary = {
         "run_id": f"baseline_{args.model}_{stamp}",
