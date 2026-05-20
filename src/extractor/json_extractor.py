@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .base import MetadataExtractor
+from .json_walker import PathStats, walk
 from .warning_rules import MetadataWarning
 
 DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
@@ -31,6 +32,43 @@ def _classify_root(root: Any) -> str:
             return "record_array"
         return "unsupported"
     return "unsupported"
+
+
+def _resolve_dtype(dtypes_seen: frozenset[str]) -> str:
+    """Resolve a path's dtype per spec §5.5.
+
+    - All non-null contributions of one dtype → that dtype.
+    - Multiple non-null dtypes → 'mixed'.
+    - Only nulls → 'null'.
+    """
+    real = dtypes_seen - {"null"}
+    if not real:
+        return "null"
+    if len(real) == 1:
+        return next(iter(real))
+    return "mixed"
+
+
+def _render_path(stats: PathStats) -> dict[str, Any]:
+    """Render a PathStats into the envelope's per-path dict (spec §5.2)."""
+    dtype = _resolve_dtype(stats.dtypes_seen)
+    presence = (
+        stats.occurrence_count / stats.denominator if stats.denominator > 0 else 0.0
+    )
+    entry: dict[str, Any] = {
+        "path": stats.path,
+        "dtype": dtype,
+        "presence": round(presence, 4),
+    }
+    if dtype not in ("object", "array"):
+        entry["sample_values"] = list(stats.sample_values)
+        entry["unique_count"] = stats.unique_count
+    if dtype in ("integer", "float") and stats.min_value is not None:
+        entry["min"] = stats.min_value
+        entry["max"] = stats.max_value
+    if dtype == "string" and stats.max_length is not None:
+        entry["max_length"] = stats.max_length
+    return entry
 
 
 def _minimal_envelope(
@@ -190,13 +228,16 @@ class JSONExtractor(MetadataExtractor):
                 ],
             )
 
-        # 7. Build the schema scaffold. Walker + warnings land in later tasks.
-        schema: dict[str, Any] = {"root_shape": root_shape, "paths": []}
+        # 7. Walk the root and render schema.paths.
+        path_stats = walk(root, sample_values_per_path=self.sample_values_per_path)
+        max_depth = max((s.max_depth_seen for s in path_stats), default=0)
+        schema: dict[str, Any] = {
+            "root_shape": root_shape,
+            "max_depth": max_depth,
+            "paths": [_render_path(s) for s in path_stats],
+        }
         if root_shape == "record_array":
             schema["root_array_length"] = len(root)
-            schema["max_depth"] = 0  # populated in Task 12
-        else:
-            schema["max_depth"] = 0
 
         return {
             "format": "json",

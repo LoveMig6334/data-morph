@@ -99,3 +99,62 @@ class TestRootShape:
         env = ex.extract(f)
         codes = [w["code"] for w in env["warnings"]]
         assert codes == ["ROOT_SHAPE_UNSUPPORTED"]
+
+
+class TestSchemaPaths:
+    def test_simple_records_paths(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        paths = {p["path"] for p in env["schema"]["paths"]}
+        assert "[].id" in paths
+        assert "[].name" in paths
+        assert "[].email" in paths
+
+    def test_path_entry_has_required_fields(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        id_entry = next(p for p in env["schema"]["paths"] if p["path"] == "[].id")
+        assert id_entry["dtype"] == "integer"
+        assert id_entry["presence"] == 1.0
+        assert id_entry["min"] == 1
+        assert id_entry["max"] == 5
+        assert id_entry["sample_values"] == [1, 2, 3]
+        assert "max_length" not in id_entry
+        assert id_entry["unique_count"] == 3
+
+    def test_string_path_has_max_length_no_min_max(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        name_entry = next(p for p in env["schema"]["paths"] if p["path"] == "[].name")
+        assert name_entry["dtype"] == "string"
+        assert "max_length" in name_entry
+        assert "min" not in name_entry
+
+    def test_max_depth_populated_for_nested_root(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "nested_root.json")
+        assert env["schema"]["max_depth"] >= 2
+
+    def test_mixed_dtype_path_resolves_to_mixed(self, tmp_path):
+        f = tmp_path / "m.json"
+        f.write_text('[{"x":1},{"x":"a"}]', encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        x = next(p for p in env["schema"]["paths"] if p["path"] == "[].x")
+        assert x["dtype"] == "mixed"
+
+    def test_null_only_dtype_resolves_to_null(self, tmp_path):
+        f = tmp_path / "n.json"
+        f.write_text('[{"x":null},{"x":null}]', encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        x = next(p for p in env["schema"]["paths"] if p["path"] == "[].x")
+        assert x["dtype"] == "null"
+
+    def test_null_plus_string_resolves_to_string(self, tmp_path):
+        f = tmp_path / "s.json"
+        f.write_text('[{"x":null},{"x":"a"},{"x":"b"}]', encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        x = next(p for p in env["schema"]["paths"] if p["path"] == "[].x")
+        assert x["dtype"] == "string"
