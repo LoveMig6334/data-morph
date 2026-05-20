@@ -158,3 +158,46 @@ class TestSchemaPaths:
         env = ex.extract(f)
         x = next(p for p in env["schema"]["paths"] if p["path"] == "[].x")
         assert x["dtype"] == "string"
+
+
+class TestSampling:
+    def test_object_root_has_empty_samples(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "nested_root.json")
+        assert env["samples"] == {}
+
+    def test_record_array_defaults_head_3_middle_1_tail_1(self):
+        # simple_records.json has 5 records → 3 + 1 + 1 exactly.
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        s = env["samples"]
+        assert len(s["head"]) == 3
+        assert len(s["middle"]) == 1
+        assert len(s["tail"]) == 1
+        # No overlap
+        all_ids = [r["id"] for r in s["head"] + s["middle"] + s["tail"]]
+        assert all_ids == sorted(set(all_ids))
+
+    def test_small_file_rule_all_in_head(self, tmp_path):
+        # 2 records, defaults are 3/1/1 → all 2 go in head, others empty.
+        f = tmp_path / "tiny.json"
+        f.write_text('[{"id":1},{"id":2}]', encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        s = env["samples"]
+        assert len(s["head"]) == 2
+        assert s["middle"] == []
+        assert s["tail"] == []
+
+    def test_large_array_uses_middle_and_tail(self, tmp_path):
+        records = [{"id": i} for i in range(100)]
+        f = tmp_path / "many.json"
+        f.write_text(json.dumps(records), encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        s = env["samples"]
+        assert [r["id"] for r in s["head"]] == [0, 1, 2]
+        assert [r["id"] for r in s["tail"]] == [99]
+        # middle is a single element from the middle of the array
+        assert len(s["middle"]) == 1
+        assert 40 <= s["middle"][0]["id"] <= 60

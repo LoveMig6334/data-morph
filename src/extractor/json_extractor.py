@@ -49,6 +49,29 @@ def _resolve_dtype(dtypes_seen: frozenset[str]) -> str:
     return "mixed"
 
 
+def _sample_record_array(
+    root: list[Any],
+    head_n: int,
+    middle_n: int,
+    tail_n: int,
+) -> dict[str, list[Any]]:
+    """Return {head, middle, tail} per spec §5.3. No element is duplicated."""
+    n = len(root)
+    if n < head_n + middle_n + tail_n:
+        return {"head": list(root), "middle": [], "tail": []}
+    head = root[:head_n]
+    tail = root[n - tail_n:] if tail_n > 0 else []
+    if middle_n > 0:
+        # Place middle in the center of the available space (between head and tail).
+        available_start = head_n
+        available_end = n - tail_n
+        mid_start = (available_start + available_end - middle_n) // 2
+        middle = root[mid_start : mid_start + middle_n]
+    else:
+        middle = []
+    return {"head": head, "middle": middle, "tail": tail}
+
+
 def _render_path(stats: PathStats) -> dict[str, Any]:
     """Render a PathStats into the envelope's per-path dict (spec §5.2)."""
     dtype = _resolve_dtype(stats.dtypes_seen)
@@ -239,6 +262,14 @@ class JSONExtractor(MetadataExtractor):
         if root_shape == "record_array":
             schema["root_array_length"] = len(root)
 
+        # 8. Sample records if root is a record_array.
+        if root_shape == "record_array":
+            samples = _sample_record_array(
+                root, self.head_n, self.middle_n, self.tail_n
+            )
+        else:
+            samples = {}
+
         return {
             "format": "json",
             "file_path": str(file_path),
@@ -246,6 +277,6 @@ class JSONExtractor(MetadataExtractor):
             "encoding": "utf-8",
             "schema_version": MetadataExtractor.SCHEMA_VERSION,
             "schema": schema,
-            "samples": {},
+            "samples": samples,
             "warnings": [],
         }
