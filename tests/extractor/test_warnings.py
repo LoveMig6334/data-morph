@@ -208,3 +208,160 @@ class TestLikelyDateColumn:
     def test_silent_on_other(self):
         col = {"name": "name", "dtype": "string"}
         assert check_likely_date_column(column=col) is None
+
+
+from src.extractor.warning_rules import (  # noqa: E402
+    check_optional_key,
+    check_mixed_type_path,
+    check_deeply_nested,
+    check_large_array,
+    check_heterogeneous_array,
+    check_likely_date_value,
+)
+from src.extractor.json_walker import PathStats  # noqa: E402
+
+
+def _make_stats(**overrides) -> PathStats:
+    """Build a PathStats with sensible defaults; override only what the test cares about."""
+    defaults = dict(
+        path="[].x",
+        dtypes_seen=frozenset({"string"}),
+        occurrence_count=10,
+        denominator=10,
+        sample_values=("a",),
+        max_depth_seen=1,
+        array_lengths_seen=(),
+        max_length=1,
+        min_value=None,
+        max_value=None,
+        unique_count=1,
+    )
+    defaults.update(overrides)
+    return PathStats(**defaults)
+
+
+class TestCheckOptionalKey:
+    def test_full_presence_does_not_fire(self):
+        s = _make_stats(occurrence_count=10, denominator=10)
+        assert check_optional_key(stats=s) is None
+
+    def test_partial_presence_fires(self):
+        s = _make_stats(occurrence_count=9, denominator=10)
+        w = check_optional_key(stats=s)
+        assert w is not None
+        assert w.code == "OPTIONAL_KEY"
+        assert w.severity == "warn"
+        assert w.context["presence"] == 0.9
+
+    def test_zero_denominator_does_not_fire(self):
+        s = _make_stats(occurrence_count=0, denominator=0)
+        assert check_optional_key(stats=s) is None
+
+
+class TestCheckMixedTypePath:
+    def test_single_dtype_does_not_fire(self):
+        s = _make_stats(dtypes_seen=frozenset({"string"}))
+        assert check_mixed_type_path(stats=s) is None
+
+    def test_string_plus_null_does_not_fire(self):
+        s = _make_stats(dtypes_seen=frozenset({"string", "null"}))
+        assert check_mixed_type_path(stats=s) is None
+
+    def test_two_real_dtypes_fires(self):
+        s = _make_stats(dtypes_seen=frozenset({"integer", "string"}))
+        w = check_mixed_type_path(stats=s)
+        assert w is not None
+        assert w.code == "MIXED_TYPE_PATH"
+        assert w.severity == "error"
+        assert set(w.context["dtypes_seen"]) == {"integer", "string"}
+
+
+class TestCheckDeeplyNested:
+    def test_at_threshold_does_not_fire(self):
+        assert check_deeply_nested(max_depth=6, threshold=6) is None
+
+    def test_above_threshold_fires(self):
+        w = check_deeply_nested(max_depth=7, threshold=6)
+        assert w is not None
+        assert w.code == "DEEPLY_NESTED"
+        assert w.severity == "warn"
+        assert w.context == {"max_depth": 7, "threshold": 6}
+
+
+class TestCheckLargeArray:
+    def test_at_threshold_does_not_fire(self):
+        s = _make_stats(path="[]", dtypes_seen=frozenset({"array"}), array_lengths_seen=(10_000,))
+        assert check_large_array(stats=s, threshold=10_000) is None
+
+    def test_above_threshold_fires(self):
+        s = _make_stats(path="[]", dtypes_seen=frozenset({"array"}), array_lengths_seen=(50_000,))
+        w = check_large_array(stats=s, threshold=10_000)
+        assert w is not None
+        assert w.code == "LARGE_ARRAY"
+        assert w.severity == "warn"
+        assert w.context["max_length"] == 50_000
+
+
+class TestCheckHeterogeneousArray:
+    def test_uniform_keys_does_not_fire(self):
+        s = _make_stats(path="[]", dtypes_seen=frozenset({"array"}))
+        keys = [frozenset({"id", "name"}), frozenset({"id", "name"})]
+        assert check_heterogeneous_array(stats=s, child_key_sets=keys) is None
+
+    def test_disjoint_keys_fires(self):
+        s = _make_stats(path="[]", dtypes_seen=frozenset({"array"}))
+        keys = [frozenset({"a", "b"}), frozenset({"c", "d"})]
+        w = check_heterogeneous_array(stats=s, child_key_sets=keys)
+        assert w is not None
+        assert w.code == "HETEROGENEOUS_ARRAY"
+        assert w.severity == "warn"
+
+    def test_mixed_object_and_scalar_fires(self):
+        s = _make_stats(
+            path="[]",
+            dtypes_seen=frozenset({"array"}),
+        )
+        w = check_heterogeneous_array(
+            stats=s, child_key_sets=[], mixed_element_types=True
+        )
+        assert w is not None
+        assert w.code == "HETEROGENEOUS_ARRAY"
+
+
+class TestCheckLikelyDateValue:
+    def test_iso_8601_strings_fire(self):
+        s = _make_stats(
+            path="[].created_at",
+            dtypes_seen=frozenset({"string"}),
+            sample_values=("2026-05-20", "2026-05-21", "2026-05-22"),
+        )
+        w = check_likely_date_value(stats=s)
+        assert w is not None
+        assert w.code == "LIKELY_DATE_VALUE"
+        assert w.severity == "info"
+
+    def test_us_dates_fire(self):
+        s = _make_stats(
+            path="[].dob",
+            dtypes_seen=frozenset({"string"}),
+            sample_values=("05/20/2026", "06/01/1990"),
+        )
+        w = check_likely_date_value(stats=s)
+        assert w is not None
+        assert w.code == "LIKELY_DATE_VALUE"
+
+    def test_non_date_strings_do_not_fire(self):
+        s = _make_stats(
+            path="[].name",
+            dtypes_seen=frozenset({"string"}),
+            sample_values=("Alice", "Bob"),
+        )
+        assert check_likely_date_value(stats=s) is None
+
+    def test_non_string_paths_do_not_fire(self):
+        s = _make_stats(
+            path="[].n",
+            dtypes_seen=frozenset({"integer"}),
+            sample_values=(1, 2),
+        )
+        assert check_likely_date_value(stats=s) is None

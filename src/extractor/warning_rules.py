@@ -228,3 +228,175 @@ def check_likely_date_column(*, column: dict[str, Any]) -> MetadataWarning | Non
         ),
         context={"column": column["name"], "dtype": dtype},
     )
+
+
+# ---------------------------------------------------------------------------
+# JSON-specific warning rules
+# ---------------------------------------------------------------------------
+
+import re as _re  # noqa: E402  (intentionally aliased to avoid clashing with `re` elsewhere)
+
+# Imported lazily inside type hints — avoids a runtime import cycle since
+# json_walker.py does not need warning_rules.py.
+from typing import TYPE_CHECKING  # noqa: E402
+
+if TYPE_CHECKING:
+    from .json_walker import PathStats
+
+
+_ISO_DATE_RE = _re.compile(r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$")
+_US_DATE_RE = _re.compile(r"^\d{1,2}/\d{1,2}/\d{4}$")
+
+
+def check_optional_key(*, stats: "PathStats") -> MetadataWarning | None:
+    """Fire `OPTIONAL_KEY` (warn) when a path has presence strictly between 0 and 1."""
+    if stats.denominator <= 0:
+        return None
+    presence = stats.occurrence_count / stats.denominator
+    if presence >= 1.0 or presence <= 0.0:
+        return None
+    return MetadataWarning(
+        code="OPTIONAL_KEY",
+        severity="warn",
+        message=(
+            f"Path '{stats.path}' is present in {stats.occurrence_count} of "
+            f"{stats.denominator} records ({presence:.1%}). Conversion code "
+            f"should treat it as optional and provide a default for missing values."
+        ),
+        context={
+            "path": stats.path,
+            "presence": round(presence, 4),
+            "occurrence_count": stats.occurrence_count,
+            "denominator": stats.denominator,
+        },
+    )
+
+
+def check_mixed_type_path(*, stats: "PathStats") -> MetadataWarning | None:
+    """Fire `MIXED_TYPE_PATH` (error) when a path has multiple non-null real dtypes."""
+    real = set(stats.dtypes_seen) - {"null"}
+    if len(real) <= 1:
+        return None
+    return MetadataWarning(
+        code="MIXED_TYPE_PATH",
+        severity="error",
+        message=(
+            f"Path '{stats.path}' has values of multiple types: "
+            f"{sorted(real)}. Conversion code must explicitly coerce to a single type."
+        ),
+        context={"path": stats.path, "dtypes_seen": sorted(real)},
+    )
+
+
+def check_deeply_nested(*, max_depth: int, threshold: int) -> MetadataWarning | None:
+    """Fire `DEEPLY_NESTED` (warn) when max_depth strictly exceeds threshold."""
+    if max_depth <= threshold:
+        return None
+    return MetadataWarning(
+        code="DEEPLY_NESTED",
+        severity="warn",
+        message=(
+            f"JSON nesting reaches depth {max_depth}, exceeding the threshold "
+            f"of {threshold}. Conversion code should use recursion or an explicit walker."
+        ),
+        context={"max_depth": max_depth, "threshold": threshold},
+    )
+
+
+def check_large_array(*, stats: "PathStats", threshold: int) -> MetadataWarning | None:
+    """Fire `LARGE_ARRAY` (warn) when any observed array length strictly exceeds threshold."""
+    if not stats.array_lengths_seen:
+        return None
+    max_len = max(stats.array_lengths_seen)
+    if max_len <= threshold:
+        return None
+    return MetadataWarning(
+        code="LARGE_ARRAY",
+        severity="warn",
+        message=(
+            f"Array at '{stats.path}' has up to {max_len} elements (threshold "
+            f"{threshold}). Generated script should stream this array, not load it whole."
+        ),
+        context={
+            "path": stats.path,
+            "max_length": max_len,
+            "threshold": threshold,
+        },
+    )
+
+
+def check_heterogeneous_array(
+    *,
+    stats: "PathStats",
+    child_key_sets: list[frozenset[str]],
+    mixed_element_types: bool = False,
+) -> MetadataWarning | None:
+    """Fire `HETEROGENEOUS_ARRAY` (warn) when array elements are non-uniform.
+
+    Two triggers:
+      1. `mixed_element_types` is True (array contains both objects and scalars).
+      2. Jaccard similarity across `child_key_sets` is < 0.6.
+    """
+    if mixed_element_types:
+        return MetadataWarning(
+            code="HETEROGENEOUS_ARRAY",
+            severity="warn",
+            message=(
+                f"Array at '{stats.path}' contains both object and non-object "
+                f"elements. Conversion code must branch on element type."
+            ),
+            context={"path": stats.path, "reason": "mixed_element_types"},
+        )
+    if len(child_key_sets) < 2:
+        return None
+    # Pairwise minimum Jaccard
+    min_jaccard = 1.0
+    for i in range(len(child_key_sets)):
+        for j in range(i + 1, len(child_key_sets)):
+            a, b = child_key_sets[i], child_key_sets[j]
+            union = a | b
+            if not union:
+                continue
+            jaccard = len(a & b) / len(union)
+            min_jaccard = min(min_jaccard, jaccard)
+    if min_jaccard >= 0.6:
+        return None
+    return MetadataWarning(
+        code="HETEROGENEOUS_ARRAY",
+        severity="warn",
+        message=(
+            f"Array at '{stats.path}' has elements with non-uniform key sets "
+            f"(min Jaccard {min_jaccard:.2f} < 0.60). Some keys exist only on some elements."
+        ),
+        context={
+            "path": stats.path,
+            "reason": "non_uniform_keys",
+            "min_jaccard": round(min_jaccard, 3),
+        },
+    )
+
+
+def check_likely_date_value(*, stats: "PathStats") -> MetadataWarning | None:
+    """Fire `LIKELY_DATE_VALUE` (info) when ≥80% of sampled strings match a date pattern."""
+    if "string" not in stats.dtypes_seen or len(stats.dtypes_seen - {"null"}) != 1:
+        return None
+    if not stats.sample_values:
+        return None
+    matches = sum(
+        1
+        for v in stats.sample_values
+        if isinstance(v, str) and (_ISO_DATE_RE.match(v) or _US_DATE_RE.match(v))
+    )
+    ratio = matches / len(stats.sample_values)
+    if ratio < 0.8:
+        return None
+    return MetadataWarning(
+        code="LIKELY_DATE_VALUE",
+        severity="info",
+        message=(
+            f"Path '{stats.path}' looks like a date column ({ratio:.0%} of "
+            f"sampled values parse as ISO 8601 or MM/DD/YYYY). Conversion "
+            f"script should parse + re-serialize consistently."
+        ),
+        context={"path": stats.path, "match_ratio": round(ratio, 2)},
+    )
