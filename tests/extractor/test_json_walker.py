@@ -174,3 +174,24 @@ class TestWalkNumericExtras:
         assert by_path["[].flag"].min_value is None
         assert by_path["[].flag"].max_value is None
         assert by_path["[].flag"].max_length is None
+
+
+class TestWalkDtypeMixing:
+    def test_null_alone_yields_only_null_dtype(self):
+        result = walk([{"x": None}, {"x": None}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].x"].dtypes_seen == frozenset({"null"})
+
+    def test_null_mixed_with_string_is_not_promoted_to_mixed(self):
+        # spec §5.5: "null-only contributions do not change the resolved dtype"
+        # — we still record {"null", "string"} in dtypes_seen; the dtype
+        # *resolution* (string vs mixed) happens in the extractor's
+        # assembly step, not here.
+        result = walk([{"x": None}, {"x": "a"}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].x"].dtypes_seen == frozenset({"null", "string"})
+
+    def test_two_real_dtypes_recorded(self):
+        result = walk([{"x": 1}, {"x": "a"}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].x"].dtypes_seen == frozenset({"integer", "string"})
