@@ -12,7 +12,15 @@ from typing import Any
 
 from .base import MetadataExtractor
 from .json_walker import PathStats, walk
-from .warning_rules import MetadataWarning
+from .warning_rules import (
+    MetadataWarning,
+    check_deeply_nested,
+    check_heterogeneous_array,
+    check_large_array,
+    check_likely_date_value,
+    check_mixed_type_path,
+    check_optional_key,
+)
 
 DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 DEFAULT_MAX_DEPTH_WARN = 6
@@ -110,6 +118,132 @@ def _minimal_envelope(
         "samples": {},
         "warnings": [w.to_dict() for w in warnings_],
     }
+
+
+def _split_path(path: str) -> list[str]:
+    """Split a PathStats path string into a sequence of hops.
+
+    Examples:
+      ""               -> []
+      "users"          -> ["users"]
+      "[]"             -> ["[]"]
+      "[].name"        -> ["[]", "name"]
+      "users[].id"     -> ["users", "[]", "id"]
+      "a.b.c"          -> ["a", "b", "c"]
+    """
+    if not path:
+        return []
+    out: list[str] = []
+    buf = ""
+    i = 0
+    while i < len(path):
+        ch = path[i]
+        if ch == "[" and path[i : i + 2] == "[]":
+            if buf:
+                out.append(buf)
+                buf = ""
+            out.append("[]")
+            i += 2
+            if i < len(path) and path[i] == ".":
+                i += 1
+        elif ch == ".":
+            if buf:
+                out.append(buf)
+                buf = ""
+            i += 1
+        else:
+            buf += ch
+            i += 1
+    if buf:
+        out.append(buf)
+    return out
+
+
+def _collect_array_element_signatures(
+    root: Any, target_path: str
+) -> tuple[list[frozenset[str]], bool]:
+    """Return (child_key_sets, mixed_element_types_flag) for one array path.
+
+    Walks `root` along `target_path` (using PathStats notation) and
+    collects element key sets at every visit of the array. Used only
+    by check_heterogeneous_array — too specialised to live in the walker.
+    """
+    parts = _split_path(target_path)
+
+    key_sets: list[frozenset[str]] = []
+    mixed_types = {"object": False, "non_object": False}
+
+    def descend(node: Any, idx: int) -> None:
+        if idx >= len(parts):
+            # node is the array itself.
+            if not isinstance(node, list):
+                return
+            for el in node:
+                if isinstance(el, dict):
+                    key_sets.append(frozenset(el.keys()))
+                    mixed_types["object"] = True
+                else:
+                    mixed_types["non_object"] = True
+            return
+        part = parts[idx]
+        if part == "[]":
+            if isinstance(node, list):
+                for el in node:
+                    descend(el, idx + 1)
+        else:
+            if isinstance(node, dict) and part in node:
+                descend(node[part], idx + 1)
+
+    descend(root, 0)
+    mixed = mixed_types["object"] and mixed_types["non_object"]
+    return key_sets, mixed
+
+
+def _collect_warnings(
+    path_stats: list[PathStats],
+    max_depth: int,
+    max_depth_warn: int,
+    max_array_len_warn: int,
+    root: Any,
+) -> list[MetadataWarning]:
+    """Apply the six pure check_* rules over walker output + scalars."""
+    warnings_: list[MetadataWarning] = []
+
+    # Per-path rules.
+    for s in path_stats:
+        for fn in (
+            check_optional_key,
+            check_mixed_type_path,
+            check_likely_date_value,
+        ):
+            w = fn(stats=s)
+            if w is not None:
+                warnings_.append(w)
+        w = check_large_array(stats=s, threshold=max_array_len_warn)
+        if w is not None:
+            warnings_.append(w)
+
+    # Whole-envelope rule: deeply-nested.
+    w = check_deeply_nested(max_depth=max_depth, threshold=max_depth_warn)
+    if w is not None:
+        warnings_.append(w)
+
+    # Heterogeneous-array rule needs per-array child-key-sets.
+    for s in path_stats:
+        if "array" not in s.dtypes_seen:
+            continue
+        key_sets, mixed_types = _collect_array_element_signatures(root, s.path)
+        if not key_sets and not mixed_types:
+            continue
+        w = check_heterogeneous_array(
+            stats=s,
+            child_key_sets=key_sets,
+            mixed_element_types=mixed_types,
+        )
+        if w is not None:
+            warnings_.append(w)
+
+    return warnings_
 
 
 class JSONExtractor(MetadataExtractor):
@@ -270,6 +404,15 @@ class JSONExtractor(MetadataExtractor):
         else:
             samples = {}
 
+        # 9. Apply warning rules over walker output.
+        warnings_list = _collect_warnings(
+            path_stats=path_stats,
+            max_depth=max_depth,
+            max_depth_warn=self.max_depth_warn,
+            max_array_len_warn=self.max_array_len_warn,
+            root=root,
+        )
+
         return {
             "format": "json",
             "file_path": str(file_path),
@@ -278,5 +421,5 @@ class JSONExtractor(MetadataExtractor):
             "schema_version": MetadataExtractor.SCHEMA_VERSION,
             "schema": schema,
             "samples": samples,
-            "warnings": [],
+            "warnings": [w.to_dict() for w in warnings_list],
         }

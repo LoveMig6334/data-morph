@@ -182,12 +182,34 @@ def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
                     visit_value(element, child_path, depth + 1, denom_increment=1)
 
     if isinstance(root, list):
+        # Collect all keys seen across all dict elements so that every
+        # key-path gets a denominator equal to the number of dict elements
+        # (not just the elements that happen to contain that key).
+        dict_element_count = sum(1 for el in root if isinstance(el, dict))
+        for element in root:
+            if isinstance(element, dict):
+                # First, bump the denominator for every key seen across ALL
+                # elements so optional keys get a correct presence fraction.
+                pass  # handled below after collecting the full key universe
+            # Non-dict elements at array root contribute to HETEROGENEOUS_ARRAY
+            # detection in the extractor, not here.
+
+        # Two-pass approach: collect full key universe, then visit values.
+        all_keys: set[str] = set()
+        for element in root:
+            if isinstance(element, dict):
+                all_keys.update(element.keys())
+
+        # Prime denominators for all known keys with the total dict-element count.
+        for key in all_keys:
+            acc = get(f"[].{key}")
+            acc.denominator += dict_element_count
+
+        # Now visit only present values (denom_increment=0 since already set).
         for element in root:
             if isinstance(element, dict):
                 for key, value in element.items():
-                    visit_value(value, f"[].{key}", depth=1, denom_increment=1)
-            # Non-dict elements at array root contribute to HETEROGENEOUS_ARRAY
-            # detection in the extractor, not here.
+                    visit_value(value, f"[].{key}", depth=1, denom_increment=0)
     elif isinstance(root, dict):
         for key, value in root.items():
             visit_value(value, key, depth=1, denom_increment=1)

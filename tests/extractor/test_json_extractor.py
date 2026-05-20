@@ -201,3 +201,64 @@ class TestSampling:
         # middle is a single element from the middle of the array
         assert len(s["middle"]) == 1
         assert 40 <= s["middle"][0]["id"] <= 60
+
+
+def _codes(env):
+    return [w["code"] for w in env["warnings"]]
+
+
+class TestWarningsBaseline:
+    def test_simple_records_zero_warnings(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        assert _codes(env) == []
+
+    def test_nested_root_zero_warnings(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "nested_root.json")
+        assert _codes(env) == []
+
+
+class TestWarningOptionalKey:
+    def test_fires_on_optional_keys_fixture(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "optional_keys.json")
+        codes = _codes(env)
+        assert "OPTIONAL_KEY" in codes
+
+
+class TestWarningMixedTypePath:
+    def test_fires_on_mixed_type_fixture(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "mixed_type_path.json")
+        codes = _codes(env)
+        assert "MIXED_TYPE_PATH" in codes
+
+
+class TestWarningDeeplyNested:
+    def test_fires_when_above_threshold(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "deeply_nested.json")
+        codes = _codes(env)
+        assert "DEEPLY_NESTED" in codes
+
+    def test_threshold_is_configurable(self):
+        ex = JSONExtractor(max_depth_warn=100)
+        env = ex.extract(FIXTURES / "deeply_nested.json")
+        assert "DEEPLY_NESTED" not in _codes(env)
+
+
+class TestWarningHeterogeneousArray:
+    def test_fires_on_disjoint_key_sets(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "heterogeneous_array.json")
+        codes = _codes(env)
+        assert "HETEROGENEOUS_ARRAY" in codes
+
+
+class TestWarningLikelyDateValue:
+    def test_fires_on_iso_date_strings(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "dates.json")
+        codes = _codes(env)
+        assert "LIKELY_DATE_VALUE" in codes
