@@ -1,0 +1,7 @@
+{
+  "meta": {"version": 1, "generator": "data-morph"},
+  "users": [
+    {"id": 1, "name": "Alice"},
+    {"id": 2, "name": "Bob"}
+  ]
+}
