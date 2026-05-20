@@ -145,3 +145,32 @@ class TestWalkContainerEntries:
         assert "[].orders" in by_path
         assert "array" in by_path["[].orders"].dtypes_seen
         assert sorted(by_path["[].orders"].array_lengths_seen) == [2, 3]
+
+
+class TestWalkNumericExtras:
+    def test_min_max_for_integer_path(self):
+        result = walk([{"x": 1}, {"x": 5}, {"x": 3}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].x"].min_value == 1
+        assert by_path["[].x"].max_value == 5
+
+    def test_min_max_for_float_path(self):
+        result = walk([{"p": 1.5}, {"p": 0.5}, {"p": 3.5}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].p"].min_value == 0.5
+        assert by_path["[].p"].max_value == 3.5
+
+    def test_max_length_for_string_path(self):
+        result = walk(
+            [{"n": "a"}, {"n": "abcd"}, {"n": "abc"}],
+            sample_values_per_path=3,
+        )
+        by_path = {s.path: s for s in result}
+        assert by_path["[].n"].max_length == 4
+
+    def test_extras_unset_for_other_dtypes(self):
+        result = walk([{"flag": True}, {"flag": False}], sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert by_path["[].flag"].min_value is None
+        assert by_path["[].flag"].max_value is None
+        assert by_path["[].flag"].max_length is None

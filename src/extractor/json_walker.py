@@ -98,6 +98,16 @@ def _record_leaf(acc: _Acc, value: Any, depth: int, cap: int) -> None:
     if value not in acc.sample_values and len(acc.sample_values) < cap:
         acc.sample_values.append(value)
 
+    # Numeric extras — booleans are a subclass of int in Python, so guard.
+    if isinstance(value, bool):
+        return
+    if isinstance(value, (int, float)):
+        acc.min_value = value if acc.min_value is None else min(acc.min_value, value)
+        acc.max_value = value if acc.max_value is None else max(acc.max_value, value)
+    elif isinstance(value, str):
+        length = len(value)
+        acc.max_length = length if acc.max_length is None else max(acc.max_length, length)
+
 
 def _finalize(acc: _Acc) -> PathStats:
     """Freeze a mutable accumulator into an immutable PathStats."""
