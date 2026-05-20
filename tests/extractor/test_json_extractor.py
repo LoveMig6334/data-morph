@@ -61,3 +61,41 @@ class TestMalformedJson:
         env = ex.extract(f)
         codes = [w["code"] for w in env["warnings"]]
         assert codes == ["MALFORMED_JSON"]
+
+
+class TestRootShape:
+    def test_record_array_classified(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "simple_records.json")
+        assert env["schema"]["root_shape"] == "record_array"
+        assert env["schema"]["root_array_length"] == 5
+
+    def test_object_root_classified(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "nested_root.json")
+        assert env["schema"]["root_shape"] == "object"
+        assert "root_array_length" not in env["schema"]
+
+    def test_scalar_root_short_circuits(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "scalar_root.json")
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["ROOT_SHAPE_UNSUPPORTED"]
+        assert env["schema"]["root_shape"] == "unsupported"
+
+    def test_array_of_primitives_short_circuits(self, tmp_path):
+        f = tmp_path / "prims.json"
+        f.write_text("[1, 2, 3, 4, 5]", encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["ROOT_SHAPE_UNSUPPORTED"]
+
+    def test_mostly_primitive_array_short_circuits(self, tmp_path):
+        # <80% object elements → unsupported
+        f = tmp_path / "mixed.json"
+        f.write_text('[{"x":1}, 2, "a", 3, 4]', encoding="utf-8")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["ROOT_SHAPE_UNSUPPORTED"]

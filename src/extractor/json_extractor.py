@@ -16,6 +16,21 @@ from .warning_rules import MetadataWarning
 DEFAULT_MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 DEFAULT_MAX_DEPTH_WARN = 6
 DEFAULT_MAX_ARRAY_LEN_WARN = 10_000
+OBJECT_ELEMENT_THRESHOLD = 0.8
+
+
+def _classify_root(root: Any) -> str:
+    """Return one of 'record_array', 'object', or 'unsupported' (spec §5.4)."""
+    if isinstance(root, dict):
+        return "object"
+    if isinstance(root, list):
+        if not root:
+            return "unsupported"
+        object_count = sum(1 for el in root if isinstance(el, dict))
+        if object_count / len(root) >= OBJECT_ELEMENT_THRESHOLD:
+            return "record_array"
+        return "unsupported"
+    return "unsupported"
 
 
 def _minimal_envelope(
@@ -156,8 +171,40 @@ class JSONExtractor(MetadataExtractor):
                 ],
             )
 
-        # Root-shape classification, walking, sampling, and warning rules
-        # land in subsequent tasks. For now: stash the parsed root in a
-        # placeholder envelope so the FILE_TOO_LARGE / EMPTY_FILE /
-        # MALFORMED_JSON tests already pass.
-        return _minimal_envelope(file_path, file_size, [])
+        # 6. Root-shape classification.
+        root_shape = _classify_root(root)
+        if root_shape == "unsupported":
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="ROOT_SHAPE_UNSUPPORTED",
+                        severity="error",
+                        message=(
+                            f"JSON root is {type(root).__name__}; Phase 2 supports "
+                            f"only object roots and record-array roots (≥80% object elements)."
+                        ),
+                        context={"observed_root_type": type(root).__name__},
+                    )
+                ],
+            )
+
+        # 7. Build the schema scaffold. Walker + warnings land in later tasks.
+        schema: dict[str, Any] = {"root_shape": root_shape, "paths": []}
+        if root_shape == "record_array":
+            schema["root_array_length"] = len(root)
+            schema["max_depth"] = 0  # populated in Task 12
+        else:
+            schema["max_depth"] = 0
+
+        return {
+            "format": "json",
+            "file_path": str(file_path),
+            "file_size_bytes": file_size,
+            "encoding": "utf-8",
+            "schema_version": MetadataExtractor.SCHEMA_VERSION,
+            "schema": schema,
+            "samples": {},
+            "warnings": [],
+        }
