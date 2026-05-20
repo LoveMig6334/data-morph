@@ -53,3 +53,31 @@ class TestWalkEmpty:
         assert walk("hello", sample_values_per_path=3) == []
         assert walk(42, sample_values_per_path=3) == []
         assert walk(None, sample_values_per_path=3) == []
+
+
+class TestWalkArrayRootFlat:
+    def test_path_notation_uses_brackets_for_array_root(self):
+        result = walk(
+            [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}],
+            sample_values_per_path=3,
+        )
+        paths = {s.path for s in result}
+        assert "[].id" in paths
+        assert "[].name" in paths
+
+    def test_occurrence_and_denominator_for_uniform_records(self):
+        result = walk(
+            [{"id": 1}, {"id": 2}, {"id": 3}],
+            sample_values_per_path=3,
+        )
+        by_path = {s.path: s for s in result}
+        assert by_path["[].id"].occurrence_count == 3
+        assert by_path["[].id"].denominator == 3
+
+    def test_sample_values_first_seen_wins(self):
+        result = walk(
+            [{"x": "a"}, {"x": "b"}, {"x": "c"}, {"x": "d"}],
+            sample_values_per_path=2,
+        )
+        by_path = {s.path: s for s in result}
+        assert by_path["[].x"].sample_values == ("a", "b")

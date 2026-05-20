@@ -9,7 +9,7 @@ PathStats list and derives warnings as a second pass.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -55,6 +55,67 @@ class PathStats:
     unique_count: int
 
 
+@dataclass
+class _Acc:
+    """Mutable accumulator used during a walk. Converted to PathStats at the end."""
+
+    path: str
+    dtypes_seen: set[str] = field(default_factory=set)
+    occurrence_count: int = 0
+    denominator: int = 0
+    sample_values: list[Any] = field(default_factory=list)
+    max_depth_seen: int = 0
+    array_lengths_seen: list[int] = field(default_factory=list)
+    max_length: int | None = None
+    min_value: float | int | None = None
+    max_value: float | int | None = None
+
+
+def _dtype_of(value: Any) -> str:
+    """Map a JSON-decoded Python value to its dtype name (see spec §5.5)."""
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "float"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, dict):
+        return "object"
+    return "unknown"
+
+
+def _record_leaf(acc: _Acc, value: Any, depth: int, cap: int) -> None:
+    """Update an accumulator with a single observed leaf value."""
+    acc.occurrence_count += 1
+    acc.max_depth_seen = max(acc.max_depth_seen, depth)
+    acc.dtypes_seen.add(_dtype_of(value))
+    if value not in acc.sample_values and len(acc.sample_values) < cap:
+        acc.sample_values.append(value)
+
+
+def _finalize(acc: _Acc) -> PathStats:
+    """Freeze a mutable accumulator into an immutable PathStats."""
+    return PathStats(
+        path=acc.path,
+        dtypes_seen=frozenset(acc.dtypes_seen),
+        occurrence_count=acc.occurrence_count,
+        denominator=acc.denominator,
+        sample_values=tuple(acc.sample_values),
+        max_depth_seen=acc.max_depth_seen,
+        array_lengths_seen=tuple(acc.array_lengths_seen),
+        max_length=acc.max_length,
+        min_value=acc.min_value,
+        max_value=acc.max_value,
+        unique_count=len(set(acc.sample_values)),
+    )
+
+
 def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
     """Walk a parsed JSON value and return per-path statistics.
 
@@ -73,6 +134,24 @@ def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
     """
     if not isinstance(root, (dict, list)):
         return []
-    # Implementation in subsequent tasks builds out array-root, object-root,
-    # nested cases, and container path emission.
-    return []
+
+    accs: dict[str, _Acc] = {}
+
+    def get(path: str) -> _Acc:
+        if path not in accs:
+            accs[path] = _Acc(path=path)
+        return accs[path]
+
+    if isinstance(root, list):
+        # Array root: walk each element with path prefix "[]"; denominator
+        # for child paths is the number of elements.
+        for element in root:
+            if isinstance(element, dict):
+                for key, value in element.items():
+                    leaf_path = f"[].{key}"
+                    acc = get(leaf_path)
+                    acc.denominator = len(root)
+                    _record_leaf(acc, value, depth=1, cap=sample_values_per_path)
+    # Object root + nested cases land in later tasks.
+
+    return [_finalize(acc) for acc in accs.values()]
