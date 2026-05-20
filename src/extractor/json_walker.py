@@ -142,16 +142,16 @@ def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
             accs[path] = _Acc(path=path)
         return accs[path]
 
-    def visit_value(value: Any, path: str, depth: int, denominator: int) -> None:
-        """Visit a value at `path`. denominator is the parent's existence count."""
+    def visit_value(value: Any, path: str, depth: int, denom_increment: int) -> None:
         acc = get(path)
-        acc.denominator = max(acc.denominator, denominator)
+        acc.denominator += denom_increment
 
-        # Only record leaf values (scalars), not containers.
+        # Only record scalar leaves in sample_values; containers update
+        # occurrence_count + dtype + max_depth manually so their dtype
+        # ("object"/"array") is recorded without polluting sample_values.
         if not isinstance(value, (dict, list)):
             _record_leaf(acc, value, depth=depth, cap=sample_values_per_path)
         else:
-            # For containers, still update occurrence and dtype.
             acc.occurrence_count += 1
             acc.max_depth_seen = max(acc.max_depth_seen, depth)
             acc.dtypes_seen.add(_dtype_of(value))
@@ -159,16 +159,27 @@ def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
         if isinstance(value, dict):
             for key, child in value.items():
                 child_path = f"{path}.{key}" if path else key
-                visit_value(child, child_path, depth + 1, denominator=1)
-        # Array recursion lands in Task 5.
+                visit_value(child, child_path, depth + 1, denom_increment=1)
+        elif isinstance(value, list):
+            acc.array_lengths_seen.append(len(value))
+            child_path = f"{path}[]"
+            for element in value:
+                if isinstance(element, dict):
+                    for key, sub in element.items():
+                        leaf_path = f"{child_path}.{key}"
+                        visit_value(sub, leaf_path, depth + 2, denom_increment=1)
+                else:
+                    visit_value(element, child_path, depth + 1, denom_increment=1)
 
     if isinstance(root, list):
         for element in root:
             if isinstance(element, dict):
                 for key, value in element.items():
-                    visit_value(value, f"[].{key}", depth=1, denominator=len(root))
+                    visit_value(value, f"[].{key}", depth=1, denom_increment=1)
+            # Non-dict elements at array root contribute to HETEROGENEOUS_ARRAY
+            # detection in the extractor, not here.
     elif isinstance(root, dict):
         for key, value in root.items():
-            visit_value(value, key, depth=1, denominator=1)
+            visit_value(value, key, depth=1, denom_increment=1)
 
     return [_finalize(acc) for acc in accs.values()]

@@ -106,3 +106,42 @@ class TestWalkObjectRoot:
         paths = {s.path for s in result}
         assert "[].user.name" in paths
         assert "[].user.age" in paths
+
+
+class TestWalkNestedArrays:
+    def test_nested_array_hop_uses_brackets(self):
+        result = walk(
+            [{"orders": [{"id": 1}, {"id": 2}]}, {"orders": [{"id": 3}]}],
+            sample_values_per_path=5,
+        )
+        paths = {s.path for s in result}
+        assert "[].orders" in paths
+        assert "[].orders[].id" in paths
+
+    def test_inner_array_denominator_is_total_inner_elements(self):
+        result = walk(
+            [{"orders": [{"id": 1}, {"id": 2}]}, {"orders": [{"id": 3}]}],
+            sample_values_per_path=5,
+        )
+        by_path = {s.path: s for s in result}
+        # 3 total order elements across both users
+        assert by_path["[].orders[].id"].occurrence_count == 3
+        assert by_path["[].orders[].id"].denominator == 3
+
+
+class TestWalkContainerEntries:
+    def test_object_container_path_has_object_dtype(self):
+        result = walk({"meta": {"version": 1}}, sample_values_per_path=3)
+        by_path = {s.path: s for s in result}
+        assert "meta" in by_path
+        assert "object" in by_path["meta"].dtypes_seen
+
+    def test_array_container_has_array_lengths_seen(self):
+        result = walk(
+            [{"orders": [1, 2, 3]}, {"orders": [4, 5]}],
+            sample_values_per_path=5,
+        )
+        by_path = {s.path: s for s in result}
+        assert "[].orders" in by_path
+        assert "array" in by_path["[].orders"].dtypes_seen
+        assert sorted(by_path["[].orders"].array_lengths_seen) == [2, 3]
