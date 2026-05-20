@@ -66,20 +66,98 @@ class JSONExtractor(MetadataExtractor):
 
     def extract(self, file_path: Path) -> dict[str, Any]:
         file_size = file_path.stat().st_size
+
+        # 1. File-size guard (cheapest check, before any I/O beyond stat).
         if file_size > self.max_file_size_bytes:
-            warning = MetadataWarning(
-                code="FILE_TOO_LARGE",
-                severity="error",
-                message=(
-                    f"File size {file_size} bytes exceeds cap "
-                    f"{self.max_file_size_bytes} bytes."
-                ),
-                context={
-                    "file_size_bytes": file_size,
-                    "max_file_size_bytes": self.max_file_size_bytes,
-                },
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="FILE_TOO_LARGE",
+                        severity="error",
+                        message=(
+                            f"File size {file_size} bytes exceeds cap "
+                            f"{self.max_file_size_bytes} bytes."
+                        ),
+                        context={
+                            "file_size_bytes": file_size,
+                            "max_file_size_bytes": self.max_file_size_bytes,
+                        },
+                    )
+                ],
             )
-            return _minimal_envelope(file_path, file_size, [warning])
-        # Encoding, parse, root-shape dispatch, and walker integration land
-        # in subsequent tasks. For now: a placeholder envelope.
+
+        # 2. Empty-file guard.
+        if file_size == 0:
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="EMPTY_FILE",
+                        severity="error",
+                        message="File is byte-empty.",
+                        context={"file_size_bytes": 0},
+                    )
+                ],
+            )
+
+        # 3. Decode (utf-8-sig handles BOM transparently).
+        try:
+            text = file_path.read_bytes().decode("utf-8-sig")
+        except UnicodeDecodeError as e:
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="MALFORMED_JSON",
+                        severity="error",
+                        message=f"File is not valid UTF-8: {e}",
+                        context={"error": str(e)},
+                    )
+                ],
+            )
+
+        # 4. Parse.
+        try:
+            root = json.loads(text)
+        except json.JSONDecodeError as e:
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="MALFORMED_JSON",
+                        severity="error",
+                        message=f"JSON parse failed: {e}",
+                        context={
+                            "error": str(e),
+                            "line": e.lineno,
+                            "column": e.colno,
+                        },
+                    )
+                ],
+            )
+
+        # 5. Empty-root guard (parsed [], {}, or null).
+        if root in (None, [], {}):
+            return _minimal_envelope(
+                file_path,
+                file_size,
+                [
+                    MetadataWarning(
+                        code="EMPTY_FILE",
+                        severity="error",
+                        message="Parsed root is empty / null.",
+                        context={"parsed_type": type(root).__name__},
+                    )
+                ],
+            )
+
+        # Root-shape classification, walking, sampling, and warning rules
+        # land in subsequent tasks. For now: stash the parsed root in a
+        # placeholder envelope so the FILE_TOO_LARGE / EMPTY_FILE /
+        # MALFORMED_JSON tests already pass.
         return _minimal_envelope(file_path, file_size, [])

@@ -36,3 +36,28 @@ class TestFileTooLarge:
         assert env["format"] == "json"
         assert env["schema"]["paths"] == []
         assert env["samples"] == {}
+
+
+class TestEmptyFile:
+    def test_byte_empty_file_short_circuits(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "empty.json")
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["EMPTY_FILE"]
+        assert env["schema"]["paths"] == []
+
+
+class TestMalformedJson:
+    def test_malformed_file_short_circuits(self):
+        ex = JSONExtractor()
+        env = ex.extract(FIXTURES / "malformed.json")
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["MALFORMED_JSON"]
+
+    def test_non_utf8_bytes_treated_as_malformed(self, tmp_path):
+        f = tmp_path / "bad.json"
+        f.write_bytes(b"\xff\xfe\x00\x00not valid")
+        ex = JSONExtractor()
+        env = ex.extract(f)
+        codes = [w["code"] for w in env["warnings"]]
+        assert codes == ["MALFORMED_JSON"]
