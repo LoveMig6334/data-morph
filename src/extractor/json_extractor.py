@@ -423,3 +423,25 @@ class JSONExtractor(MetadataExtractor):
             "samples": samples,
             "warnings": [w.to_dict() for w in warnings_list],
         }
+
+
+def _main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="python -m src.extractor.json_extractor",
+        description="Extract metadata envelope from a JSON file.",
+    )
+    parser.add_argument("file", help="Path to a .json file")
+    args = parser.parse_args()
+
+    env = JSONExtractor().extract(Path(args.file))
+    text = json.dumps(env, indent=2, default=str, ensure_ascii=False)
+    print(text)
+    token_estimate = len(text) // 4
+    print(f"# rough token estimate: ~{token_estimate} (chars / 4)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

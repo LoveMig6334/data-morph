@@ -262,3 +262,18 @@ class TestWarningLikelyDateValue:
         env = ex.extract(FIXTURES / "dates.json")
         codes = _codes(env)
         assert "LIKELY_DATE_VALUE" in codes
+
+
+class TestPerformance:
+    @pytest.mark.performance
+    def test_large_array_extracts_within_2s(self):
+        import time
+
+        ex = JSONExtractor()
+        start = time.monotonic()
+        env = ex.extract(FIXTURES / "large_array.json")
+        elapsed = time.monotonic() - start
+        assert env["schema"]["root_shape"] == "record_array"
+        assert env["schema"]["root_array_length"] == 50_000
+        # 2 s budget on M5 Max reference hardware.
+        assert elapsed < 2.0, f"extraction took {elapsed:.2f}s (budget 2.0s)"
