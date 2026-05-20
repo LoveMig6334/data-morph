@@ -81,3 +81,28 @@ class TestWalkArrayRootFlat:
         )
         by_path = {s.path: s for s in result}
         assert by_path["[].x"].sample_values == ("a", "b")
+
+
+class TestWalkObjectRoot:
+    def test_object_root_paths_start_with_key(self):
+        result = walk({"meta": {"version": 1}, "name": "x"}, sample_values_per_path=3)
+        paths = {s.path for s in result}
+        assert "name" in paths
+        assert "meta.version" in paths
+
+    def test_nested_object_path_uses_dot(self):
+        result = walk(
+            {"a": {"b": {"c": 42}}},
+            sample_values_per_path=3,
+        )
+        paths = {s.path for s in result}
+        assert "a.b.c" in paths
+
+    def test_array_root_with_nested_object(self):
+        result = walk(
+            [{"user": {"name": "Alice", "age": 30}}],
+            sample_values_per_path=3,
+        )
+        paths = {s.path for s in result}
+        assert "[].user.name" in paths
+        assert "[].user.age" in paths

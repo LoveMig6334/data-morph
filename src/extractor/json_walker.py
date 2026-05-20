@@ -142,16 +142,33 @@ def walk(root: Any, sample_values_per_path: int) -> list[PathStats]:
             accs[path] = _Acc(path=path)
         return accs[path]
 
+    def visit_value(value: Any, path: str, depth: int, denominator: int) -> None:
+        """Visit a value at `path`. denominator is the parent's existence count."""
+        acc = get(path)
+        acc.denominator = max(acc.denominator, denominator)
+
+        # Only record leaf values (scalars), not containers.
+        if not isinstance(value, (dict, list)):
+            _record_leaf(acc, value, depth=depth, cap=sample_values_per_path)
+        else:
+            # For containers, still update occurrence and dtype.
+            acc.occurrence_count += 1
+            acc.max_depth_seen = max(acc.max_depth_seen, depth)
+            acc.dtypes_seen.add(_dtype_of(value))
+
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = f"{path}.{key}" if path else key
+                visit_value(child, child_path, depth + 1, denominator=1)
+        # Array recursion lands in Task 5.
+
     if isinstance(root, list):
-        # Array root: walk each element with path prefix "[]"; denominator
-        # for child paths is the number of elements.
         for element in root:
             if isinstance(element, dict):
                 for key, value in element.items():
-                    leaf_path = f"[].{key}"
-                    acc = get(leaf_path)
-                    acc.denominator = len(root)
-                    _record_leaf(acc, value, depth=1, cap=sample_values_per_path)
-    # Object root + nested cases land in later tasks.
+                    visit_value(value, f"[].{key}", depth=1, denominator=len(root))
+    elif isinstance(root, dict):
+        for key, value in root.items():
+            visit_value(value, key, depth=1, denominator=1)
 
     return [_finalize(acc) for acc in accs.values()]
