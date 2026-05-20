@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
-MODEL_ID = "mlx-community/gemma-4-e2b-it-bf16"
+_LOCAL_PATH = Path(__file__).resolve().parents[2] / "models" / "gemma-4-e2b-it-bf16"
+MODEL_ID = str(_LOCAL_PATH)
 
 _state: dict = {"model": None, "processor": None, "load_sec": None}
 
