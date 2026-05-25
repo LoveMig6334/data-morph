@@ -69,3 +69,22 @@ class TestScriptResultOk:
         assert ScriptResult("a", "import sys", "raw", 0, "", {}).ok is True
         assert ScriptResult("a", "", "raw", 0, "", {}).ok is False
         assert ScriptResult("a", "import sys", "raw", 1, "err", {}).ok is False
+
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.teacher
+def test_live_opus_writes_runnable_script(tmp_path):
+    """Opt-in: requires `claude` CLI + Opus access. Run with `-m teacher`."""
+    from src.data.collect import collect_case
+    from src.data.generators import uc3_txt_log_to_csv as uc3
+    from src.data.generators.base import write_case
+    from src.evaluation.runner import discover_cases
+
+    case_obj = uc3.generate(seed=99, complexity="simple")
+    write_case(case_obj, tmp_path, "gen_000001")
+    case = discover_cases(tmp_path)[0]
+    res = collect_case(case, max_retries=2)  # real Opus teacher (default teacher_fn)
+    assert res.script, "teacher returned no script"
+    assert res.accepted, f"pair not accepted: {res.error_kind} / {res.reason}"
