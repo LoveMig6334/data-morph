@@ -46,3 +46,30 @@ class TestSplitRecords:
         assert len(ids["train"]) + len(ids["val"]) + len(ids["test"]) == 100
         # roughly 80/10/10
         assert 5 <= len(ids["val"]) <= 15 and 5 <= len(ids["test"]) <= 15
+
+
+from scripts.build_dataset import build_dataset  # noqa: E402
+
+
+class TestBuildDataset:
+    def test_writes_three_jsonl_files(self, tmp_path):
+        interim = tmp_path / "interim"
+        interim.mkdir()
+        for i in range(20):
+            (interim / f"uc__gen_{i:06d}.json").write_text(
+                __import__("json").dumps(_rec(f"uc/gen_{i:06d}")), encoding="utf-8"
+            )
+        # a non-record file that must be ignored
+        (interim / "collect_manifest.json").write_text('{"n_cases": 20}', encoding="utf-8")
+
+        processed = tmp_path / "processed"
+        summary = build_dataset(interim, processed, seed=0)
+        for split in ("train", "val", "test"):
+            f = processed / f"{split}.jsonl"
+            assert f.exists()
+        # manifest was not counted as a record
+        assert summary["n_records"] == 20
+        # each line is a valid chat record
+        import json as _json
+        line = (processed / "train.jsonl").read_text().splitlines()[0]
+        assert "messages" in _json.loads(line)
