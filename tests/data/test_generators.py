@@ -38,3 +38,41 @@ class TestWriteCase:
         assert meta["use_case"] == "uc3_txt_log_to_csv"
         assert case_dir.parent.name == "uc3_txt_log_to_csv"
         assert case_dir.name == "gen_000001"
+
+
+from src.evaluation.metrics import score_all  # noqa: E402
+
+
+def _assert_oracle_self_consistent(case: GeneratedCase):
+    """The expected output must be valid + self-consistent under the metrics."""
+    required = case.meta.get("required_substrings")
+    scores = score_all(
+        case.expected_text, case.expected_text, case.output_format, required
+    )
+    assert scores["format_validity"] == 1.0
+    assert scores["loadability"] == 1.0
+    assert scores["content_accuracy"] == 1.0
+
+
+class TestUC3:
+    def test_deterministic(self):
+        from src.data.generators import uc3_txt_log_to_csv as uc3
+
+        a = uc3.generate(seed=1, complexity="simple")
+        b = uc3.generate(seed=1, complexity="simple")
+        assert a.input_text == b.input_text
+        assert a.expected_text == b.expected_text
+
+    def test_oracle_self_consistent(self):
+        from src.data.generators import uc3_txt_log_to_csv as uc3
+
+        for complexity in ("simple", "medium", "complex"):
+            _assert_oracle_self_consistent(uc3.generate(seed=2, complexity=complexity))
+
+    def test_shape(self):
+        from src.data.generators import uc3_txt_log_to_csv as uc3
+
+        case = uc3.generate(seed=3, complexity="simple")
+        assert case.input_format == "txt"
+        assert case.output_format == "csv"
+        assert case.expected_text.splitlines()[0] == "timestamp,level,source,message"
