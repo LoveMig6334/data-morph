@@ -80,3 +80,15 @@ class TestCollectCase:
         case = _one_case(tmp_path)
         collect_case(case, teacher_fn=spy)
         assert "file_path" not in captured
+
+    def test_teacher_usage_captured_from_payload(self, tmp_path):
+        # Opus token usage must be recorded (one-shot data — not recoverable later).
+        usage = {"input_tokens": 1234, "output_tokens": 567}
+
+        def teacher_with_usage(envelope, instruction, output_format, feedback=None):
+            return ScriptResult("a", _GOOD_UC3_SCRIPT, "raw", 0, "", {"usage": usage})
+
+        case = _one_case(tmp_path)
+        res = collect_case(case, teacher_fn=teacher_with_usage)
+        assert res.accepted is True
+        assert res.teacher_usage == usage

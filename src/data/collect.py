@@ -38,6 +38,7 @@ class PairResult:
     instruction: str = ""
     analysis: str = ""
     script: str = ""
+    teacher_usage: dict[str, Any] | None = None  # Opus token usage (cost + W6 analysis)
 
 
 def _passes(scores: dict[str, float]) -> bool:
@@ -91,6 +92,11 @@ def collect_case(
     for attempt in range(max_retries + 1):
         result.retries = attempt
         tr = teacher_fn(envelope, instruction, meta["output_format"], feedback=feedback)
+        # Capture token usage from the latest teacher response (claude -p JSON
+        # payload carries it). One-shot data — not recoverable after the run.
+        usage = tr.raw_payload.get("usage") if tr.raw_payload else None
+        if usage:
+            result.teacher_usage = usage
         if not tr.ok:
             result.error_kind = "no_script"
             result.reason = f"teacher produced no <script> (stderr: {tr.stderr[:200]})"
@@ -158,6 +164,7 @@ def collect_corpus(
                 "script": res.script,
                 "scores": res.scores,
                 "retries": res.retries,
+                "teacher_usage": res.teacher_usage,
             }
             out_path = interim_root / f"{res.use_case}__{case.case_dir.name}.json"
             out_path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
