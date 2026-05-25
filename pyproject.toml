@@ -23,5 +23,6 @@ dev = [
 [tool.pytest.ini_options]
 markers = [
     "performance: opt-in slow tests; run with `pytest -m performance`",
+    "teacher: live Claude Opus calls via `claude -p` (opt-in; run with `pytest -m teacher`)",
 ]
-addopts = "-m 'not performance'"
+addopts = "-m 'not performance and not teacher'"
