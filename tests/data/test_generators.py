@@ -174,3 +174,32 @@ class TestUC5:
         dst = _json.loads(case.expected_text)
         assert "user_name" in src[0] and "name" in dst[0]
         assert "user_name" not in dst[0]
+
+
+class TestCorpusBuilder:
+    def test_build_corpus_counts_and_layout(self, tmp_path):
+        from scripts.generate_corpus import build_corpus
+
+        manifest = build_corpus(dest_root=tmp_path, count=50, seed_base=1000)
+        # 50 cases across 5 use cases.
+        assert manifest["n_cases"] == 50
+        # Every listed case dir exists with three files.
+        for entry in manifest["cases"]:
+            case_dir = tmp_path / entry["use_case"] / entry["case_name"]
+            assert (case_dir / "meta.json").exists()
+        # Difficulty mix is roughly 50/35/15 (allow rounding).
+        mix = manifest["complexity_counts"]
+        assert mix["simple"] >= mix["medium"] >= mix["complex"]
+
+    def test_build_corpus_is_reproducible(self, tmp_path):
+        from scripts.generate_corpus import build_corpus
+
+        m1 = build_corpus(dest_root=tmp_path / "a", count=25, seed_base=7)
+        m2 = build_corpus(dest_root=tmp_path / "b", count=25, seed_base=7)
+        # Same seed_base => identical input bytes for matching case names.
+        for e1, e2 in zip(m1["cases"], m2["cases"], strict=True):
+            f1 = (tmp_path / "a" / e1["use_case"] / e1["case_name"])
+            f2 = (tmp_path / "b" / e2["use_case"] / e2["case_name"])
+            in1 = next(f1.glob("input.*")).read_bytes()
+            in2 = next(f2.glob("input.*")).read_bytes()
+            assert in1 == in2
