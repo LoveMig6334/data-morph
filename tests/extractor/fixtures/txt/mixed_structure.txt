@@ -1,0 +1,4 @@
+[2026-04-15 10:23:45] INFO app: ok
+[2026-04-15 10:23:46] INFO db: ok
+[2026-04-15 10:24:12] WARN app: ok
+this line has no timestamp at all

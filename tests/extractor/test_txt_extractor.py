@@ -156,3 +156,38 @@ class TestTXTExtractor:
         p = _write(tmp_path, "app.log", "[2026-04-15 10:23:45] INFO app: ok\n")
         env = TXTExtractor().extract(p)
         json.dumps(env)  # must not raise
+
+
+import pytest  # noqa: E402
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "txt"
+
+
+class TestTXTFixtures:
+    def test_clean_log_detected(self):
+        env = TXTExtractor().extract(FIXTURES / "clean_log.txt")
+        assert env["schema"]["record_pattern"] == "log_line"
+
+    def test_freeform_detected(self):
+        env = TXTExtractor().extract(FIXTURES / "freeform.txt")
+        assert env["schema"]["record_pattern"] == "freeform"
+        codes = {w["code"] for w in env["warnings"]}
+        assert "NO_PATTERN_DETECTED" in codes
+
+    def test_mixed_structure_does_not_crash(self):
+        env = TXTExtractor().extract(FIXTURES / "mixed_structure.txt")
+        assert env["schema"]["line_count"] == 4
+
+
+@pytest.mark.performance
+def test_large_txt_under_budget(tmp_path):
+    import time
+
+    big = tmp_path / "big.log"
+    line = "[2026-04-15 10:23:45] INFO app: event happened here\n"
+    big.write_text(line * 50_000, encoding="utf-8")
+    start = time.perf_counter()
+    env = TXTExtractor().extract(big)
+    elapsed = time.perf_counter() - start
+    assert env["schema"]["line_count"] == 50_000
+    assert elapsed < 2.0, f"extract took {elapsed:.2f}s (budget 2s)"
