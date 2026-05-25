@@ -100,3 +100,25 @@ class TestUC1:
         assert case.input_text.splitlines()[0] == (
             "user_name,user_email,order_id,order_item,order_price"
         )
+
+
+class TestUC2:
+    def test_deterministic(self):
+        from src.data.generators import uc2_json_to_csv as uc2
+
+        a = uc2.generate(seed=1, complexity="medium")
+        b = uc2.generate(seed=1, complexity="medium")
+        assert a.input_text == b.input_text and a.expected_text == b.expected_text
+
+    def test_oracle_self_consistent(self):
+        from src.data.generators import uc2_json_to_csv as uc2
+
+        for c in ("simple", "medium", "complex"):
+            _assert_oracle_self_consistent(uc2.generate(seed=2, complexity=c))
+
+    def test_simple_header(self):
+        from src.data.generators import uc2_json_to_csv as uc2
+
+        case = uc2.generate(seed=3, complexity="simple")
+        assert case.input_format == "json" and case.output_format == "csv"
+        assert case.expected_text.splitlines()[0] == "name,address.city,address.zip"
