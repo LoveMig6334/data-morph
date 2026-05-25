@@ -400,3 +400,74 @@ def check_likely_date_value(*, stats: "PathStats") -> MetadataWarning | None:
         ),
         context={"path": stats.path, "match_ratio": round(ratio, 2)},
     )
+
+
+# ---------------------------------------------------------------------------
+# TXT-specific warning rules
+# ---------------------------------------------------------------------------
+
+
+def check_no_pattern_detected(*, record_pattern: str) -> MetadataWarning | None:
+    """Fire `NO_PATTERN_DETECTED` (warn) when no structured line pattern was found."""
+    if record_pattern != "freeform":
+        return None
+    return MetadataWarning(
+        code="NO_PATTERN_DETECTED",
+        severity="warn",
+        message=(
+            "No consistent line structure (log/delimited/key-value/fixed-width) "
+            "was detected. The conversion script must parse freeform text."
+        ),
+        context={"record_pattern": record_pattern},
+    )
+
+
+def check_mixed_line_structure(
+    *, match_ratio: float, threshold: float = 0.8
+) -> MetadataWarning | None:
+    """Fire `MIXED_LINE_STRUCTURE` (warn) when only some lines match the dominant pattern."""
+    if match_ratio <= 0.0 or match_ratio >= threshold:
+        return None
+    return MetadataWarning(
+        code="MIXED_LINE_STRUCTURE",
+        severity="warn",
+        message=(
+            f"Only {match_ratio:.0%} of lines match the dominant pattern "
+            f"(threshold {threshold:.0%}). Some lines deviate — the script "
+            f"should skip or special-case non-conforming lines."
+        ),
+        context={"match_ratio": round(match_ratio, 3), "threshold": threshold},
+    )
+
+
+def check_inconsistent_field_count(
+    *, field_counts: list[int]
+) -> MetadataWarning | None:
+    """Fire `INCONSISTENT_FIELD_COUNT` (warn) when delimited lines split into varying widths."""
+    if not field_counts or len(set(field_counts)) <= 1:
+        return None
+    return MetadataWarning(
+        code="INCONSISTENT_FIELD_COUNT",
+        severity="warn",
+        message=(
+            f"Delimited lines split into a varying number of fields "
+            f"(observed widths: {sorted(set(field_counts))}). The script must "
+            f"handle ragged rows."
+        ),
+        context={"observed_widths": sorted(set(field_counts))},
+    )
+
+
+def check_likely_timestamp_prefix(*, record_pattern: str) -> MetadataWarning | None:
+    """Fire `LIKELY_TIMESTAMP_PREFIX` (info) when lines start with a timestamp."""
+    if record_pattern != "log_line":
+        return None
+    return MetadataWarning(
+        code="LIKELY_TIMESTAMP_PREFIX",
+        severity="info",
+        message=(
+            "Lines begin with a timestamp prefix. The script should parse the "
+            "leading timestamp and re-serialize it consistently (ISO 8601)."
+        ),
+        context={"record_pattern": record_pattern},
+    )
