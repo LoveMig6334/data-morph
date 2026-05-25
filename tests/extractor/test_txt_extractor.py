@@ -103,3 +103,56 @@ class TestInferLinePattern:
         result = infer_line_pattern([])
         assert result["record_pattern"] == "freeform"
         assert result["match_ratio"] == 0.0
+
+
+import json  # noqa: E402
+
+from src.extractor.txt_extractor import TXTExtractor  # noqa: E402
+
+
+def _write(tmp_path: Path, name: str, text: str) -> Path:
+    p = tmp_path / name
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+class TestTXTExtractor:
+    def test_supports_txt_and_log(self, tmp_path):
+        ex = TXTExtractor()
+        assert ex.supports(Path("a.txt")) is True
+        assert ex.supports(Path("a.log")) is True
+        assert ex.supports(Path("a.csv")) is False
+
+    def test_log_file_envelope(self, tmp_path):
+        text = (
+            "[2026-04-15 10:23:45] INFO app: Server started\n"
+            "[2026-04-15 10:23:46] WARN db: Slow query\n"
+            "[2026-04-15 10:24:01] ERROR db: Connection lost\n"
+        )
+        p = _write(tmp_path, "app.log", text)
+        env = TXTExtractor().extract(p)
+        assert env["format"] == "txt"
+        assert env["schema_version"] == "0.1"
+        assert env["schema"]["line_count"] == 3
+        assert env["schema"]["record_pattern"] == "log_line"
+        assert env["samples"]["head"]  # non-empty
+        codes = {w["code"] for w in env["warnings"]}
+        assert "LIKELY_TIMESTAMP_PREFIX" in codes
+
+    def test_empty_file_fires_empty_warning(self, tmp_path):
+        p = _write(tmp_path, "empty.txt", "")
+        env = TXTExtractor().extract(p)
+        codes = {w["code"] for w in env["warnings"]}
+        assert "EMPTY_FILE" in codes
+        assert env["schema"]["line_count"] == 0
+
+    def test_freeform_fires_no_pattern(self, tmp_path):
+        p = _write(tmp_path, "prose.txt", "The quick brown fox\njumped over it\n")
+        env = TXTExtractor().extract(p)
+        codes = {w["code"] for w in env["warnings"]}
+        assert "NO_PATTERN_DETECTED" in codes
+
+    def test_envelope_is_json_serializable(self, tmp_path):
+        p = _write(tmp_path, "app.log", "[2026-04-15 10:23:45] INFO app: ok\n")
+        env = TXTExtractor().extract(p)
+        json.dumps(env)  # must not raise

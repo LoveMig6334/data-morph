@@ -86,3 +86,106 @@ def infer_line_pattern(lines: list[str]) -> dict[str, Any]:
         return {"record_pattern": "key_value", "match_ratio": round(kv_hits / n, 3)}
 
     return {"record_pattern": "freeform", "match_ratio": 0.0}
+
+
+def _read_nonblank_lines(file_path: Path, encoding: str) -> list[str]:
+    """Return non-blank lines with trailing newlines stripped."""
+    with file_path.open("r", encoding=encoding) as f:
+        return [ln.rstrip("\n\r") for ln in f if ln.strip()]
+
+
+def sample_lines(
+    lines: list[str], *, head_n: int = 3, middle_n: int = 1, tail_n: int = 1
+) -> dict[str, list[str]]:
+    """Head/middle/tail sampling of lines with no overlap (mirrors sampler.sample_csv)."""
+    n = len(lines)
+    if n == 0:
+        return {"head": [], "middle": [], "tail": []}
+    if n <= head_n + middle_n + tail_n:
+        return {"head": list(lines), "middle": [], "tail": []}
+    head = lines[:head_n]
+    tail = lines[n - tail_n:] if tail_n > 0 else []
+    mid_start = (head_n + (n - tail_n) - middle_n) // 2
+    middle = lines[mid_start : mid_start + middle_n] if middle_n > 0 else []
+    return {"head": head, "middle": middle, "tail": tail}
+
+
+class TXTExtractor(MetadataExtractor):
+    """Stage 1c — turns a .txt/.log file into the shared metadata envelope."""
+
+    def __init__(self, head_n: int = 3, middle_n: int = 1, tail_n: int = 1) -> None:
+        self.head_n = head_n
+        self.middle_n = middle_n
+        self.tail_n = tail_n
+
+    def supports(self, file_path: Path) -> bool:
+        return file_path.suffix.lower() in (".txt", ".log")
+
+    def extract(self, file_path: Path) -> dict[str, Any]:
+        warnings: list[MetadataWarning] = []
+        file_size = file_path.stat().st_size
+
+        encoding, attempted = detect_encoding(file_path)
+        _push(warnings, check_latin1_fallback(final_encoding=encoding, attempted=attempted))
+
+        lines = _read_nonblank_lines(file_path, encoding)
+        line_count = len(lines)
+        _push(warnings, check_empty_file(row_count=line_count))
+
+        pattern = infer_line_pattern(lines)
+        _push(warnings, check_no_pattern_detected(record_pattern=pattern["record_pattern"]))
+        _push(warnings, check_likely_timestamp_prefix(record_pattern=pattern["record_pattern"]))
+        _push(
+            warnings,
+            check_mixed_line_structure(
+                match_ratio=pattern.get("match_ratio", 0.0),
+                threshold=PATTERN_THRESHOLD,
+            ),
+        )
+        if pattern["record_pattern"] == "delimited":
+            _push(
+                warnings,
+                check_inconsistent_field_count(field_counts=pattern.get("field_counts", [])),
+            )
+
+        schema: dict[str, Any] = {"line_count": line_count, **pattern}
+        samples = sample_lines(
+            lines, head_n=self.head_n, middle_n=self.middle_n, tail_n=self.tail_n
+        )
+        return {
+            "format": "txt",
+            "file_path": str(file_path),
+            "file_size_bytes": file_size,
+            "encoding": encoding,
+            "schema_version": self.SCHEMA_VERSION,
+            "schema": schema,
+            "samples": samples,
+            "warnings": [w.to_dict() for w in warnings],
+        }
+
+
+def _push(bucket: list[MetadataWarning], maybe: MetadataWarning | None) -> None:
+    if maybe is not None:
+        bucket.append(maybe)
+
+
+def _main() -> int:
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        prog="python -m src.extractor.txt_extractor",
+        description="Extract metadata envelope from a .txt/.log file.",
+    )
+    parser.add_argument("file", help="Path to a .txt or .log file")
+    args = parser.parse_args()
+
+    env = TXTExtractor().extract(Path(args.file))
+    text = json.dumps(env, indent=2, default=str, ensure_ascii=False)
+    print(text)
+    print(f"# rough token estimate: ~{len(text) // 4} (chars / 4)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())
