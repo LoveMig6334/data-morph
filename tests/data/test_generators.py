@@ -147,3 +147,30 @@ class TestUC4:
         # Every required substring must actually appear in the report.
         for sub in case.meta["required_substrings"]:
             assert sub in case.expected_text
+
+
+class TestUC5:
+    def test_deterministic(self):
+        from src.data.generators import uc5_schema_migration as uc5
+
+        a = uc5.generate(seed=1, complexity="medium")
+        b = uc5.generate(seed=1, complexity="medium")
+        assert a.input_text == b.input_text and a.expected_text == b.expected_text
+
+    def test_oracle_self_consistent(self):
+        from src.data.generators import uc5_schema_migration as uc5
+
+        for c in ("simple", "medium", "complex"):
+            _assert_oracle_self_consistent(uc5.generate(seed=2, complexity=c))
+
+    def test_renames_keys(self):
+        import json as _json
+
+        from src.data.generators import uc5_schema_migration as uc5
+
+        case = uc5.generate(seed=3, complexity="simple")
+        assert case.input_format == "json" and case.output_format == "json"
+        src = _json.loads(case.input_text)
+        dst = _json.loads(case.expected_text)
+        assert "user_name" in src[0] and "name" in dst[0]
+        assert "user_name" not in dst[0]
