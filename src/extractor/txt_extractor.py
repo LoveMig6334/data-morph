@@ -55,37 +55,45 @@ def infer_line_pattern(lines: list[str]) -> dict[str, Any]:
     Returns a dict with at least `record_pattern` and `match_ratio`. For
     `log_line` adds `pattern_regex`; for `delimited` adds `delimiter` and
     `field_counts`.
+
+    The dominant pattern is reported even when its match ratio is BELOW
+    `PATTERN_THRESHOLD` (as long as it matched at least one line); that is what
+    lets `check_mixed_line_structure` fire on a partial match. Only when no
+    pattern matches any line is the result `freeform` with `match_ratio` 0.0.
     """
     if not lines:
         return {"record_pattern": "freeform", "match_ratio": 0.0}
     n = len(lines)
 
-    log_hits = sum(1 for ln in lines if _LOG_PREFIX_RE.match(ln))
-    if log_hits / n >= PATTERN_THRESHOLD:
-        return {
-            "record_pattern": "log_line",
-            "match_ratio": round(log_hits / n, 3),
-            "pattern_regex": _LOG_PREFIX_RE.pattern,
-        }
+    log_ratio = sum(1 for ln in lines if _LOG_PREFIX_RE.match(ln)) / n
 
     delim, counts = _dominant_delimiter(lines)
     if delim is not None:
         multi = [c for c in counts if c >= 2]
         modal = Counter(multi).most_common(1)[0][0]
-        match_ratio = sum(1 for c in counts if c == modal) / n
-        if match_ratio >= PATTERN_THRESHOLD:
-            return {
-                "record_pattern": "delimited",
-                "match_ratio": round(match_ratio, 3),
-                "delimiter": delim,
-                "field_counts": counts,
-            }
+        delim_ratio = sum(1 for c in counts if c == modal) / n
+    else:
+        delim_ratio = 0.0
 
-    kv_hits = sum(1 for ln in lines if _KEY_VALUE_RE.match(ln))
-    if kv_hits / n >= PATTERN_THRESHOLD:
-        return {"record_pattern": "key_value", "match_ratio": round(kv_hits / n, 3)}
+    kv_ratio = sum(1 for ln in lines if _KEY_VALUE_RE.match(ln)) / n
 
-    return {"record_pattern": "freeform", "match_ratio": 0.0}
+    # Priority on ties: log_line > delimited > key_value (max keeps the first).
+    candidates = [("log_line", log_ratio), ("delimited", delim_ratio), ("key_value", kv_ratio)]
+    best_pattern, best_ratio = max(candidates, key=lambda c: c[1])
+
+    if best_ratio <= 0.0:
+        return {"record_pattern": "freeform", "match_ratio": 0.0}
+
+    result: dict[str, Any] = {
+        "record_pattern": best_pattern,
+        "match_ratio": round(best_ratio, 3),
+    }
+    if best_pattern == "log_line":
+        result["pattern_regex"] = _LOG_PREFIX_RE.pattern
+    elif best_pattern == "delimited":
+        result["delimiter"] = delim
+        result["field_counts"] = counts
+    return result
 
 
 def _read_nonblank_lines(file_path: Path, encoding: str) -> list[str]:

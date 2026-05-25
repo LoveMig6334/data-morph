@@ -37,6 +37,14 @@ class TestRunScript:
         assert res.error_kind == "syntax"
         assert res.ok is False
 
+    def test_indentation_error_classified_as_syntax(self, tmp_path):
+        # IndentationError is a SyntaxError subclass; its stderr label is
+        # "IndentationError", not "SyntaxError" — must still classify as syntax.
+        bad_indent = "import sys\nx = 1\n  y = 2\n"
+        res = run_script(bad_indent, _input(tmp_path), output_suffix=".txt")
+        assert res.error_kind == "syntax"
+        assert "IndentationError" in res.stderr
+
     def test_runtime_error(self, tmp_path):
         res = run_script(_RUNTIME, _input(tmp_path), output_suffix=".txt")
         assert res.error_kind == "runtime"

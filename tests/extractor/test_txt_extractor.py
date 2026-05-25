@@ -99,6 +99,19 @@ class TestInferLinePattern:
         lines = ["The quick brown fox", "jumped over the lazy dog"]
         assert infer_line_pattern(lines)["record_pattern"] == "freeform"
 
+    def test_partial_pattern_reports_dominant_with_subthreshold_ratio(self):
+        # 3 of 4 lines are log lines (ratio 0.75 < 0.8): report the dominant
+        # pattern with its partial ratio so MIXED_LINE_STRUCTURE can fire.
+        lines = [
+            "[2026-04-15 10:23:45] INFO app: ok",
+            "[2026-04-15 10:23:46] INFO db: ok",
+            "[2026-04-15 10:24:12] WARN app: ok",
+            "this line has no timestamp at all",
+        ]
+        result = infer_line_pattern(lines)
+        assert result["record_pattern"] == "log_line"
+        assert result["match_ratio"] == 0.75
+
     def test_empty(self):
         result = infer_line_pattern([])
         assert result["record_pattern"] == "freeform"
@@ -174,9 +187,14 @@ class TestTXTFixtures:
         codes = {w["code"] for w in env["warnings"]}
         assert "NO_PATTERN_DETECTED" in codes
 
-    def test_mixed_structure_does_not_crash(self):
+    def test_mixed_structure_fires_mixed_warning(self):
+        # 3 of 4 lines are log lines (ratio 0.75 < 0.8) -> the dominant pattern
+        # is reported with a sub-threshold ratio, so MIXED_LINE_STRUCTURE fires.
         env = TXTExtractor().extract(FIXTURES / "mixed_structure.txt")
         assert env["schema"]["line_count"] == 4
+        codes = {w["code"] for w in env["warnings"]}
+        assert "MIXED_LINE_STRUCTURE" in codes
+        assert "NO_PATTERN_DETECTED" not in codes
 
 
 @pytest.mark.performance

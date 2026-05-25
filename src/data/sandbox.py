@@ -78,7 +78,10 @@ def run_script(
         elapsed = time.perf_counter() - start
 
         if proc.returncode != 0:
-            kind = "syntax" if "SyntaxError" in proc.stderr else "runtime"
+            # IndentationError/TabError are SyntaxError subclasses but their
+            # stderr label does not contain "SyntaxError" — match them too.
+            syntax_markers = ("SyntaxError", "IndentationError", "TabError")
+            kind = "syntax" if any(m in proc.stderr for m in syntax_markers) else "runtime"
             return SandboxResult("", proc.returncode, proc.stderr, elapsed, kind)
 
         if not out_path.exists():
