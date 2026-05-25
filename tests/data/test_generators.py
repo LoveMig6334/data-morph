@@ -122,3 +122,28 @@ class TestUC2:
         case = uc2.generate(seed=3, complexity="simple")
         assert case.input_format == "json" and case.output_format == "csv"
         assert case.expected_text.splitlines()[0] == "name,address.city,address.zip"
+
+
+class TestUC4:
+    def test_deterministic(self):
+        from src.data.generators import uc4_csv_to_txt_report as uc4
+
+        a = uc4.generate(seed=1, complexity="medium")
+        b = uc4.generate(seed=1, complexity="medium")
+        assert a.input_text == b.input_text and a.expected_text == b.expected_text
+
+    def test_oracle_self_consistent(self):
+        from src.data.generators import uc4_csv_to_txt_report as uc4
+
+        for c in ("simple", "medium", "complex"):
+            _assert_oracle_self_consistent(uc4.generate(seed=2, complexity=c))
+
+    def test_has_required_substrings(self):
+        from src.data.generators import uc4_csv_to_txt_report as uc4
+
+        case = uc4.generate(seed=3, complexity="simple")
+        assert case.output_format == "txt"
+        assert case.meta["content_accuracy_mode"] == "txt_substring"
+        # Every required substring must actually appear in the report.
+        for sub in case.meta["required_substrings"]:
+            assert sub in case.expected_text
