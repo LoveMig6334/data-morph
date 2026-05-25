@@ -5,6 +5,7 @@ description = "Distill a CSV/JSON/TXT file-conversion capability from Claude Opu
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "jupyter>=1.1.1",
     "matplotlib>=3.10.9",
     "mlx-lm>=0.31.3",
     "mlx-vlm>=0.5.0",
