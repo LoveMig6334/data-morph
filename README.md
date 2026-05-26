@@ -43,6 +43,16 @@ file" (impractical for a 2 B model) to "read metadata, write a script"
 to arbitrary file sizes. Failures are debuggable — the script is a readable
 intermediate artefact.
 
+### Status
+
+W1–W2 complete (metrics + Opus baseline). Stage 1 extractors (CSV, JSON, TXT),
+the Stage 4 sandbox, and the full Stage 3 teacher pipeline are **built and
+validated end-to-end** — a 10-case stratified dry-run accepts 100% across all
+five use cases. Source data comes from **seeded synthetic generators** (an
+800-case corpus, reproducible via `scripts/generate_corpus.py`) that act as the
+ground-truth oracle. Next: the full teacher-collection run → training dataset →
+W5 LoRA fine-tune. See `docs/progression.md` for the live tracker.
+
 ## Supported formats
 
 CSV, JSON, TXT — in 5 use cases (CSV→JSON nested, JSON→CSV flattening, TXT log→CSV, CSV→TXT report, schema migration).
@@ -69,21 +79,21 @@ Add a new dependency: `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only).
 
 ```
 data/
-  raw/          # source files collected from Kaggle / HF / GitHub (gitignored)
-  interim/      # teacher-generated pairs pre-verification
-  processed/    # verified training set for fine-tuning
+  raw/          # synthetic corpus from seeded generators (regenerable, gitignored)
+  interim/      # verified teacher pairs (envelope + analysis + script + scores)
+  processed/    # train/val/test chat JSONL for fine-tuning
   test_set/     # 15 hand-crafted W2 baseline cases
 notebooks/      # EDA, error analysis, experiments
 src/
-  extractor/    # Stage 1: deterministic metadata extractor (CSV done; JSON, TXT next)
-  evaluation/   # Stage 5: the 4 W2 metrics + Opus-baseline runner
-  data/         # data collection + teacher-model pair generation
-  features/     # formatting into (instruction, input, output)
+  extractor/    # Stage 1: deterministic metadata extractor — CSV, JSON, TXT (done)
+  evaluation/   # Stage 5: the 4 W2 metrics + Opus-baseline runner (DO NOT EDIT)
+  data/         # generators (oracle), sandbox (Stage 4), teacher_script + collect (Stage 3)
+  features/     # format_pairs: verified pairs → chat JSONL + disjoint split
   models/       # LoRA/QLoRA fine-tune + inference (W5)
-scripts/        # baseline + plotting CLIs
-skills/         # Agent-Skill prompts read by `claude -p`
-tests/          # unit tests (metrics, extractor) + fixtures
-models/         # fine-tuned checkpoints (gitignored)
+scripts/        # generate_corpus, collect_pairs, collect_all_parallel, build_dataset, baseline, plotting
+skills/         # Agent-Skill prompts read by `claude -p` (file conversion + script generation)
+tests/          # unit tests (metrics, extractor, data, features) + fixtures
+models/         # Gemma-4 E2B (local, gitignored) + fine-tuned checkpoints
 results/        # baseline run artefacts (per-run summary.json + plots)
 docs/           # specs, plans, weekly reports (gitignored)
 ```
