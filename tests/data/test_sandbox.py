@@ -32,6 +32,17 @@ class TestRunScript:
         assert res.ok is True
         assert res.output_text.strip() == "HELLO"
 
+    def test_relative_input_path_resolved_against_caller_cwd(self, tmp_path, monkeypatch):
+        # The sandbox runs the script with cwd=<tempdir>, so a RELATIVE input
+        # path must be resolved against the caller's cwd, not the sandbox's,
+        # or the script gets a FileNotFoundError. (Regression: the real CLI
+        # passes data/raw/... relative paths; unit tests used absolute tmp_path.)
+        monkeypatch.chdir(tmp_path)
+        Path("in.txt").write_text("hello\n", encoding="utf-8")
+        res = run_script(_GOOD, Path("in.txt"), output_suffix=".txt")
+        assert res.error_kind == "ok", res.stderr
+        assert res.output_text.strip() == "HELLO"
+
     def test_syntax_error(self, tmp_path):
         res = run_script(_SYNTAX, _input(tmp_path), output_suffix=".txt")
         assert res.error_kind == "syntax"
