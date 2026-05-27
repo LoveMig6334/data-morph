@@ -139,8 +139,15 @@ def collect_corpus(
     teacher_fn: TeacherFn = call_script_teacher,
     max_retries: int = 3,
     limit: int | None = None,
+    resume: bool = False,
 ) -> dict[str, Any]:
-    """Run collect_case over every corpus case; write accepted records + a manifest."""
+    """Run collect_case over every corpus case; write accepted records + a manifest.
+
+    When ``resume`` is True, any case that already has an accepted record file in
+    ``interim_root`` is skipped without calling the teacher, so an interrupted run
+    (e.g. one stopped by a teacher usage limit) can be continued without
+    re-spending Opus calls on pairs already collected.
+    """
     cases = discover_cases(raw_root)
     if limit is not None:
         cases = cases[:limit]
@@ -148,7 +155,23 @@ def collect_corpus(
 
     manifest: list[dict[str, Any]] = []
     n_accepted = 0
+    n_skipped = 0
     for case in cases:
+        out_path = interim_root / f"{case.meta['use_case']}__{case.case_dir.name}.json"
+        if resume and out_path.exists():
+            n_skipped += 1
+            manifest.append(
+                {
+                    "case_id": case.case_id,
+                    "use_case": case.meta["use_case"],
+                    "accepted": True,
+                    "error_kind": "skipped_existing",
+                    "retries": 0,
+                    "scores": {},
+                    "reason": "",
+                }
+            )
+            continue
         res = collect_case(case, teacher_fn=teacher_fn, max_retries=max_retries)
         if res.accepted:
             n_accepted += 1
@@ -180,10 +203,16 @@ def collect_corpus(
             }
         )
 
+    n_attempted = len(cases) - n_skipped
     summary = {
         "n_cases": len(cases),
+        "n_skipped": n_skipped,
+        "n_attempted": n_attempted,
         "n_accepted": n_accepted,
-        "accept_rate": round(n_accepted / len(cases), 3) if cases else 0.0,
+        "n_records_total": n_accepted + n_skipped,
+        # accept_rate is over cases actually attempted this run (skipped ones
+        # were already accepted), so a resumed run's rate stays meaningful.
+        "accept_rate": round(n_accepted / n_attempted, 3) if n_attempted else 0.0,
         "results": manifest,
     }
     (interim_root / "collect_manifest.json").write_text(

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.data.collect import PairResult, collect_case  # noqa: E402
+from src.data.collect import PairResult, collect_case, collect_corpus  # noqa: E402
 from src.data.generators import uc3_txt_log_to_csv as uc3  # noqa: E402
 from src.data.generators.base import write_case  # noqa: E402
 from src.data.teacher_script import ScriptResult  # noqa: E402
@@ -92,3 +92,55 @@ class TestCollectCase:
         res = collect_case(case, teacher_fn=teacher_with_usage)
         assert res.accepted is True
         assert res.teacher_usage == usage
+
+
+class TestCollectCorpusResume:
+    def _two_cases(self, tmp_path: Path) -> Path:
+        raw = tmp_path / "raw"
+        for i in (1, 2):
+            write_case(uc3.generate(seed=i, complexity="simple"), raw, f"gen_00000{i}")
+        return raw
+
+    def test_resume_skips_existing_records_without_calling_teacher(self, tmp_path):
+        raw = self._two_cases(tmp_path)
+        interim = tmp_path / "interim"
+
+        calls = {"n": 0}
+
+        def counting_teacher(envelope, instruction, output_format, feedback=None):
+            calls["n"] += 1
+            return ScriptResult("analysis", _GOOD_UC3_SCRIPT, "raw", 0, "", {})
+
+        # First pass: both cases attempted and accepted -> 2 teacher calls, 2 records.
+        first = collect_corpus(raw, interim, teacher_fn=counting_teacher)
+        assert first["n_accepted"] == 2
+        assert first["n_skipped"] == 0
+        assert calls["n"] == 2
+        records = list(interim.glob("uc3_txt_log_to_csv__*.json"))
+        assert len(records) == 2
+
+        # Second pass with --resume: both already have records -> 0 teacher calls.
+        calls["n"] = 0
+        second = collect_corpus(raw, interim, teacher_fn=counting_teacher, resume=True)
+        assert calls["n"] == 0
+        assert second["n_skipped"] == 2
+        assert second["n_attempted"] == 0
+        assert second["n_accepted"] == 0
+        assert second["n_records_total"] == 2
+
+    def test_no_resume_reprocesses_everything(self, tmp_path):
+        # Default (resume=False) must keep the original behaviour: every case attempted.
+        raw = self._two_cases(tmp_path)
+        interim = tmp_path / "interim"
+        collect_corpus(raw, interim, teacher_fn=_fake_teacher(_GOOD_UC3_SCRIPT))
+
+        calls = {"n": 0}
+
+        def counting_teacher(envelope, instruction, output_format, feedback=None):
+            calls["n"] += 1
+            return ScriptResult("analysis", _GOOD_UC3_SCRIPT, "raw", 0, "", {})
+
+        summary = collect_corpus(raw, interim, teacher_fn=counting_teacher)
+        assert calls["n"] == 2  # re-attempted despite existing records
+        assert summary["n_skipped"] == 0
+        assert summary["accept_rate"] == 1.0

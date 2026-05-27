@@ -21,13 +21,28 @@ def _main() -> int:
     parser.add_argument("--interim", type=Path, default=Path("data/interim"), help="Output root")
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N cases")
     parser.add_argument("--max-retries", type=int, default=3, help="Teacher retries per case")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip cases that already have an accepted record (continue an interrupted run "
+        "without re-spending teacher calls)",
+    )
     args = parser.parse_args()
 
     summary = collect_corpus(
-        args.raw, args.interim, max_retries=args.max_retries, limit=args.limit
+        args.raw,
+        args.interim,
+        max_retries=args.max_retries,
+        limit=args.limit,
+        resume=args.resume,
     )
-    print(f"Processed {summary['n_cases']} cases -> {summary['n_accepted']} accepted "
-          f"(accept rate {summary['accept_rate']:.1%}). Records in {args.interim}.")
+    print(
+        f"Processed {summary['n_attempted']} cases "
+        f"(skipped {summary['n_skipped']} already-done) -> "
+        f"{summary['n_accepted']} accepted "
+        f"(accept rate {summary['accept_rate']:.1%}); "
+        f"{summary['n_records_total']} records total in {args.interim}."
+    )
     return 0
 
 

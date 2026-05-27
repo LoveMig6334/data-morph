@@ -11,11 +11,26 @@
 # so trust the "Accepted records" count below — the pairs themselves are safe
 # (every accepted case writes a uniquely-named <use_case>__<case>.json).
 #
-# Usage:  bash scripts/collect_all_parallel.sh
+# Resumable by default: existing accepted records in data/interim are kept and
+# their cases skipped (no teacher call), so a run stopped partway — e.g. by a
+# Claude usage limit — can be continued by simply re-running this script. Pass
+# --fresh to wipe data/interim and collect every case from scratch.
+#
+# Usage:  bash scripts/collect_all_parallel.sh [--fresh]
 #
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
+
+FRESH=0
+for arg in "$@"; do
+  case "$arg" in
+    --fresh) FRESH=1 ;;
+    -h|--help) echo "Usage: bash scripts/collect_all_parallel.sh [--fresh]"; exit 0 ;;
+    *) echo "Unknown argument: $arg (try --fresh or --help)" >&2; exit 2 ;;
+  esac
+done
+
 RAW="data/raw"
 INTERIM="data/interim"
 SHARD_ROOT="${TMPDIR:-/tmp}/morph_shard"
@@ -26,10 +41,18 @@ if [ ! -d "$RAW" ] || [ -z "$(ls -d "$RAW"/*/ 2>/dev/null)" ]; then
   exit 1
 fi
 
-echo "Clearing previous interim records..."
-rm -f "$INTERIM"/*.json "$INTERIM"/_*.log
-rm -rf "$SHARD_ROOT"
 mkdir -p "$INTERIM"
+if [ "$FRESH" -eq 1 ]; then
+  echo "Fresh run: clearing previous interim records..."
+  rm -f "$INTERIM"/*.json "$INTERIM"/_*.log
+  RESUME_FLAG=""
+else
+  existing=$(find "$INTERIM" -maxdepth 1 -name '*.json' ! -name 'collect_manifest.json' 2>/dev/null | wc -l | tr -d ' ')
+  echo "Resume run: keeping $existing existing record(s); already-done cases will be skipped."
+  echo "  (pass --fresh to wipe data/interim and start over)"
+  RESUME_FLAG="--resume"
+fi
+rm -rf "$SHARD_ROOT"
 
 pids=()
 for dir in "$RAW"/*/; do
@@ -38,7 +61,7 @@ for dir in "$RAW"/*/; do
   mkdir -p "$root"
   ln -sfn "$(pwd)/$RAW/$uc" "$root/$uc"
   echo "  launching shard: $uc"
-  uv run python scripts/collect_pairs.py --raw "$root" --interim "$INTERIM" \
+  uv run python scripts/collect_pairs.py --raw "$root" --interim "$INTERIM" $RESUME_FLAG \
       > "$INTERIM/_$uc.log" 2>&1 &
   pids+=($!)
 done
