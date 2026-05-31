@@ -20,7 +20,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
+import tempfile
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -80,22 +82,65 @@ def _count(it):
     return c
 
 
+def resolve_adapter(arg: str | None) -> tuple[str | None, str | None]:
+    """Resolve --adapter to a directory mlx_vlm can load (with adapters.safetensors).
+
+    Accepts either an adapter directory or a single checkpoint file
+    (e.g. 0001000_adapters.safetensors). A checkpoint file is staged into a temp
+    dir as adapters.safetensors alongside the sibling adapter_config.json.
+
+    Returns (load_dir, label). The temp dir (if any) lives for the process.
+    """
+    if not arg:
+        return None, None
+    p = Path(arg)
+    if p.is_dir():
+        if not (p / "adapters.safetensors").exists():
+            raise FileNotFoundError(f"{p} has no adapters.safetensors")
+        return str(p), p.name
+    if p.is_file():
+        cfg = p.parent / "adapter_config.json"
+        if not cfg.exists():
+            raise FileNotFoundError(f"no adapter_config.json next to {p}")
+        staged = Path(tempfile.mkdtemp(prefix="adapter_"))
+        shutil.copy(p, staged / "adapters.safetensors")
+        shutil.copy(cfg, staged / "adapter_config.json")
+        return str(staged), p.stem  # label by checkpoint name
+    raise FileNotFoundError(f"adapter path not found: {arg}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--interim", default="data/interim")
     ap.add_argument("--raw", default="data/raw")
-    ap.add_argument("--out", default=None, help="output dir (default results/baseline_newpipeline_gemma_<ts>)")
+    ap.add_argument("--out", default=None, help="output dir (default auto-named under results/)")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--only", default=None, help="filter to case_ids starting with this prefix (e.g. uc4)")
+    ap.add_argument(
+        "--adapter",
+        default=None,
+        help="LoRA adapter dir or checkpoint .safetensors to evaluate the fine-tuned student "
+        "(omit for the base-model baseline)",
+    )
     args = ap.parse_args()
+
+    adapter_dir, adapter_label = resolve_adapter(args.adapter)
+    if adapter_dir:
+        from src.models import gemma_mlx
+
+        gemma_mlx.use_adapter(adapter_dir)
 
     interim = PROJECT_ROOT / args.interim
     raw = PROJECT_ROOT / args.raw
     ids = test_case_ids(interim)
     cases = [c for c in discover_cases(raw) if c.case_id in ids]
+    if args.only:
+        cases = [c for c in cases if c.case_id.startswith(args.only)]
     if args.limit:
         cases = cases[: args.limit]
 
-    print(f"new-pipeline base-student baseline: {len(cases)} held-out test cases")
+    who = f"fine-tuned ({adapter_label})" if adapter_dir else "base-student"
+    print(f"new-pipeline {who} eval: {len(cases)} held-out test cases")
     print("(Gemma loads on the first case; zero-shot, no retries)\n")
 
     rows: list[dict] = []
@@ -125,14 +170,20 @@ def main() -> None:
 
     agg = aggregate(rows)
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    out = Path(args.out) if args.out else PROJECT_ROOT / "results" / f"baseline_newpipeline_gemma_{stamp}"
+    if args.out:
+        out = Path(args.out)
+    elif adapter_dir:
+        out = PROJECT_ROOT / "results" / f"eval_finetuned_{adapter_label}_{stamp}"
+    else:
+        out = PROJECT_ROOT / "results" / f"baseline_newpipeline_gemma_{stamp}"
     out.mkdir(parents=True, exist_ok=True)
     summary = {
         "run_id": out.name,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "model": "models/gemma-4-e2b-it-bf16",
+        "adapter": args.adapter,
+        "role": "student_finetuned_newpipeline" if adapter_dir else "student_base_newpipeline",
         "backend": "mlx_vlm",
-        "role": "student_base_newpipeline",
         "pipeline": "envelope->script->sandbox->metrics (zero-shot, no retries, skill in-context)",
         "eval_set": "held-out test split (seed=0, test_frac=0.1) reproduced from data/interim",
         "aggregate": agg,
@@ -140,7 +191,7 @@ def main() -> None:
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
 
-    print("\n=== overall (base student, new pipeline) ===")
+    print(f"\n=== overall ({who}, new pipeline) ===")
     for m in METRICS:
         print(f"  {m:18} {agg['overall'][m]:.3f}")
     print(f"  accepted (all-pass)  {agg['n_accepted']}/{agg['n_cases']}")

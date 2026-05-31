@@ -7,7 +7,18 @@ from pathlib import Path
 _LOCAL_PATH = Path(__file__).resolve().parents[2] / "models" / "gemma-4-e2b-it-bf16"
 MODEL_ID = str(_LOCAL_PATH)
 
-_state: dict = {"model": None, "processor": None, "load_sec": None}
+_state: dict = {"model": None, "processor": None, "load_sec": None, "adapter": None}
+
+
+def use_adapter(adapter_path: str | None) -> None:
+    """Select a LoRA adapter directory for inference (None = base model).
+
+    The directory must contain ``adapters.safetensors`` + ``adapter_config.json``.
+    Changing the selection forces the model to reload on the next ``generate`` call.
+    """
+    if adapter_path != _state["adapter"]:
+        _state["adapter"] = adapter_path
+        _state["model"] = None  # force reload with the new adapter (or base)
 
 
 @dataclass
@@ -27,11 +38,12 @@ def _ensure_loaded() -> None:
     from mlx_vlm import load  # lazy import
 
     t0 = time.time()
-    model, processor = load(MODEL_ID)
+    model, processor = load(MODEL_ID, adapter_path=_state["adapter"])
     _state["model"] = model
     _state["processor"] = processor
     _state["load_sec"] = round(time.time() - t0, 2)
-    print(f"[gemma_mlx] loaded {MODEL_ID} in {_state['load_sec']}s")
+    tag = f" + adapter {_state['adapter']}" if _state["adapter"] else ""
+    print(f"[gemma_mlx] loaded {MODEL_ID}{tag} in {_state['load_sec']}s")
 
 
 def generate(messages: list[dict], max_tokens: int = 4096) -> GenerationResult:

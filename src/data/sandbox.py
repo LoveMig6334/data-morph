@@ -50,9 +50,7 @@ def run_script(
     cpu_seconds: int = DEFAULT_CPU_SECONDS,
 ) -> SandboxResult:
     """Write `script` to a temp dir, run it on `input_path`, return the output."""
-    # The subprocess runs with cwd=<tempdir>, so resolve the input path to an
-    # absolute path against the CALLER's cwd first — otherwise a relative path
-    # (e.g. "data/raw/...") would not be found from inside the temp dir.
+
     input_path = Path(input_path).resolve()
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
@@ -69,7 +67,7 @@ def run_script(
                 text=True,
                 timeout=timeout_sec,
                 cwd=str(tmpdir),
-                preexec_fn=preexec,  # type: ignore[arg-type]
+                preexec_fn=preexec,
             )
         except subprocess.TimeoutExpired:
             return SandboxResult(
@@ -82,10 +80,10 @@ def run_script(
         elapsed = time.perf_counter() - start
 
         if proc.returncode != 0:
-            # IndentationError/TabError are SyntaxError subclasses but their
-            # stderr label does not contain "SyntaxError" — match them too.
             syntax_markers = ("SyntaxError", "IndentationError", "TabError")
-            kind = "syntax" if any(m in proc.stderr for m in syntax_markers) else "runtime"
+            kind = (
+                "syntax" if any(m in proc.stderr for m in syntax_markers) else "runtime"
+            )
             return SandboxResult("", proc.returncode, proc.stderr, elapsed, kind)
 
         if not out_path.exists():
