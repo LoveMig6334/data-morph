@@ -45,13 +45,30 @@ intermediate artefact.
 
 ### Status
 
-W1–W2 complete (metrics + Opus baseline). Stage 1 extractors (CSV, JSON, TXT),
-the Stage 4 sandbox, and the full Stage 3 teacher pipeline are **built and
-validated end-to-end** — a 10-case stratified dry-run accepts 100% across all
-five use cases. Source data comes from **seeded synthetic generators** (an
-800-case corpus, reproducible via `scripts/generate_corpus.py`) that act as the
-ground-truth oracle. Next: the full teacher-collection run → training dataset →
-W5 LoRA fine-tune. See `docs/progression.md` for the live tracker.
+**W1–W6 complete; a fine-tuned, quantized student is production-validated.**
+
+- **Data (W3):** 800 verified teacher pairs (100% accept), split into
+  `data/processed/{train,val,test}.jsonl` (650 / 80 / 70, content-disjoint).
+- **EDA (W4):** `notebook/w4_eda.ipynb` — training-readiness audit (balance,
+  leakage, sequence-length budget).
+- **Fine-tune (W5):** Gemma-4 E2B distilled via LoRA (`mlx_vlm.lora`, SFT) on the
+  envelope→script task. Best checkpoint (iter-400) selected by held-out eval, then
+  **8-bit quantized → 5.5 GB**.
+- **Eval (W6):** on the held-out 70-case test set, through the full pipeline
+  (envelope → script → sandbox → 4 metrics):
+
+  | | all-pass | metrics |
+  |---|---:|---:|
+  | base student (zero-shot) | 41/70 | ~0.73 |
+  | fine-tuned, one-shot | 65/70 | 0.929 |
+  | **fine-tuned 8-bit, retry≤3 (production)** | **68/70** | **0.971** |
+
+  That clears the **≥80%-of-teacher** target on every metric (Opus teacher ≈ 1.0)
+  — the production student reaches ~97% of teacher.
+
+**Next (W7):** package the model (fuse adapter → single 8-bit artifact, strip the
+unused vision/audio towers), push to Hugging Face Hub, ship the `pip`-installable
+wrapper. See `docs/progression.md` for the live tracker.
 
 ## Supported formats
 
@@ -83,7 +100,7 @@ data/
   interim/      # verified teacher pairs (envelope + analysis + script + scores)
   processed/    # train/val/test chat JSONL for fine-tuning
   test_set/     # 15 hand-crafted W2 baseline cases
-notebooks/      # EDA, error analysis, experiments
+notebook/       # EDA (w4_eda), fine-tune scaffold (w5_finetune), experiments
 src/
   extractor/    # Stage 1: deterministic metadata extractor — CSV, JSON, TXT (done)
   evaluation/   # Stage 5: the 4 W2 metrics + Opus-baseline runner (DO NOT EDIT)
