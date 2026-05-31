@@ -1,7 +1,7 @@
 {
   "run_id": "baseline_gemma_2026-05-13_185723",
   "generated_at": "2026-05-13T18:57:56",
-  "model": "mlx-community/gemma-2-2b-it (no fine-tune)",
+  "model": "models/gemma-4-e2b-it-bf16",
   "backend": "mlx",
   "role": "student-base",
   "aggregate": {
@@ -323,5 +323,6 @@
       },
       "output_preview": "{\n  \"users\": [\n    {\n      \"first\": \"Alice\",\n      \"last\": \"Smith\",\n      \"contact\": {\n        \"email\": \"alice@example.com\"\n      },\n      \"birth_year\": 1995\n    },\n    {\n      \"first\": \"Bob\",\n      \""
     }
-  ]
+  ],
+  "model_label_corrected": "was mislabeled mlx-community/gemma-2-2b-it; per-case model_id is gemma-4-e2b-it-bf16"
 }
