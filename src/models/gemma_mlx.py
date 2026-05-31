@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
 _LOCAL_PATH = Path(__file__).resolve().parents[2] / "models" / "gemma-4-e2b-it-bf16"
-MODEL_ID = str(_LOCAL_PATH)
+# Base model dir; override via GEMMA_MLX_MODEL to point at e.g. a quantized build.
+MODEL_ID = os.environ.get("GEMMA_MLX_MODEL", str(_LOCAL_PATH))
 
 _state: dict = {"model": None, "processor": None, "load_sec": None, "adapter": None}
 

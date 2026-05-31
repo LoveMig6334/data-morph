@@ -1,0 +1,1183 @@
+{
+  "run_id": "eval_q8_iter400",
+  "generated_at": "2026-05-31T22:20:33",
+  "model": "models/gemma-4-e2b-it-bf16",
+  "adapter": "models/lora_gemma4e2b_scriptgen",
+  "role": "student_finetuned_newpipeline",
+  "backend": "mlx_vlm",
+  "pipeline": "envelope->script->sandbox->metrics (zero-shot, no retries, skill in-context)",
+  "eval_set": "held-out test split (seed=0, test_frac=0.1) reproduced from data/interim",
+  "aggregate": {
+    "overall": {
+      "format_validity": 0.929,
+      "schema_compliance": 0.929,
+      "loadability": 0.929,
+      "content_accuracy": 0.925
+    },
+    "by_use_case": {
+      "uc1_csv_to_json_nested": {
+        "n": 14,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "uc2_json_to_csv_flatten": {
+        "n": 8,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "uc3_txt_log_to_csv": {
+        "n": 14,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.982
+      },
+      "uc4_csv_to_txt_report": {
+        "n": 19,
+        "format_validity": 0.737,
+        "schema_compliance": 0.737,
+        "loadability": 0.737,
+        "content_accuracy": 0.737
+      },
+      "uc5_schema_migration": {
+        "n": 15,
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      }
+    },
+    "by_complexity": {
+      "simple": {
+        "n": 29,
+        "format_validity": 0.966,
+        "schema_compliance": 0.966,
+        "loadability": 0.966,
+        "content_accuracy": 0.957
+      },
+      "medium": {
+        "n": 28,
+        "format_validity": 0.893,
+        "schema_compliance": 0.893,
+        "loadability": 0.893,
+        "content_accuracy": 0.893
+      },
+      "complex": {
+        "n": 13,
+        "format_validity": 0.923,
+        "schema_compliance": 0.923,
+        "loadability": 0.923,
+        "content_accuracy": 0.923
+      }
+    },
+    "n_cases": 70,
+    "n_accepted": 64,
+    "n_inference_errors": 0,
+    "error_kinds": {
+      "ok": 64,
+      "low_score": 1,
+      "runtime": 5
+    }
+  },
+  "cases": [
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000011",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000019",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000030",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000031",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000054",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000056",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000100",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000104",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000112",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000130",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000146",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000147",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000148",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc1_csv_to_json_nested/gen_000155",
+      "use_case": "uc1_csv_to_json_nested",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000162",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000163",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000167",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000182",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000270",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000272",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000277",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc2_json_to_csv_flatten/gen_000293",
+      "use_case": "uc2_json_to_csv_flatten",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000328",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": false,
+      "error_kind": "low_score",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 0.75
+      },
+      "reason": "output scored low on ['content_accuracy']: {'format_validity': 1.0, 'schema_compliance': 1.0, 'loadability': 1.0, 'content_accuracy': 0.75}"
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000330",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000341",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000354",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000362",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000374",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000381",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000389",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "simple",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000425",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "medium",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000433",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "medium",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000437",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "medium",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000452",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "medium",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000462",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "complex",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc3_txt_log_to_csv/gen_000478",
+      "use_case": "uc3_txt_log_to_csv",
+      "complexity": "complex",
+      "input_format": "txt",
+      "output_format": "csv",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000504",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": false,
+      "error_kind": "runtime",
+      "scores": {},
+      "reason": "script runtime: Traceback (most recent call last):\n  File \"/tmp/claude-501/tmpa2cq7km6/convert.py\", line 51, in <module>\n    main()\n  File \"/tmp/claude-501/tmpa2cq7km6/convert.py\", line 21, in main\n    rows = [[r.region, str(r.sales), str(r.units)] for r in df.itertuples(index=False)]\n             ^"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000520",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000544",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "simple",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000563",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000566",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000568",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": false,
+      "error_kind": "runtime",
+      "scores": {},
+      "reason": "script runtime: Traceback (most recent call last):\n  File \"/tmp/claude-501/tmp0e_2ipfl/convert.py\", line 51, in <module>\n    main()\n  File \"/tmp/claude-501/tmp0e_2ipfl/convert.py\", line 21, in main\n    rows = [[r.region, str(r.sales), str(r.units)] for r in df.itertuples(index=False)]\n             ^"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000574",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000583",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000584",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": false,
+      "error_kind": "runtime",
+      "scores": {},
+      "reason": "script runtime: Traceback (most recent call last):\n  File \"/tmp/claude-501/tmpeg23wlhg/convert.py\", line 57, in <module>\n    main()\n  File \"/tmp/claude-501/tmpeg23wlhg/convert.py\", line 19, in main\n    for (region, sales, units), group in df.groupby([\"region\"], sort=False):\n        ^^^^^^^^^^^^^^^^^"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000589",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000594",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000601",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000602",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000605",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000606",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "medium",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": false,
+      "error_kind": "runtime",
+      "scores": {},
+      "reason": "script runtime: Traceback (most recent call last):\n  File \"/tmp/claude-501/tmpsqsqa2s4/convert.py\", line 57, in <module>\n    main()\n  File \"/tmp/claude-501/tmpsqsqa2s4/convert.py\", line 19, in main\n    for (region, sales, units), group in df.groupby([\"region\"], sort=False):\n        ^^^^^^^^^^^^^^^^^"
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000621",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000622",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": false,
+      "error_kind": "runtime",
+      "scores": {},
+      "reason": "script runtime: Traceback (most recent call last):\n  File \"/tmp/claude-501/tmp8n7bg06c/convert.py\", line 56, in <module>\n    main()\n  File \"/tmp/claude-501/tmp8n7bg06c/convert.py\", line 21, in main\n    \"sales\": str(int(group[\"sales\"])),\n                 ^^^^^^^^^^^^^^^^^^^\nTypeError: int() argument "
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000633",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc4_csv_to_txt_report/gen_000635",
+      "use_case": "uc4_csv_to_txt_report",
+      "complexity": "complex",
+      "input_format": "csv",
+      "output_format": "txt",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000651",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000655",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000658",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000659",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000671",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000684",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000697",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000704",
+      "use_case": "uc5_schema_migration",
+      "complexity": "simple",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000739",
+      "use_case": "uc5_schema_migration",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000746",
+      "use_case": "uc5_schema_migration",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000759",
+      "use_case": "uc5_schema_migration",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000763",
+      "use_case": "uc5_schema_migration",
+      "complexity": "medium",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000780",
+      "use_case": "uc5_schema_migration",
+      "complexity": "complex",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000792",
+      "use_case": "uc5_schema_migration",
+      "complexity": "complex",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    },
+    {
+      "case_id": "uc5_schema_migration/gen_000796",
+      "use_case": "uc5_schema_migration",
+      "complexity": "complex",
+      "input_format": "json",
+      "output_format": "json",
+      "accepted": true,
+      "error_kind": "ok",
+      "scores": {
+        "format_validity": 1.0,
+        "schema_compliance": 1.0,
+        "loadability": 1.0,
+        "content_accuracy": 1.0
+      },
+      "reason": ""
+    }
+  ]
+}
