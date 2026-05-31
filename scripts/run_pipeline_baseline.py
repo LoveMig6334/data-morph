@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -72,6 +73,8 @@ def aggregate(rows: list[dict]) -> dict:
         "n_accepted": sum(1 for r in rows if r["accepted"]),
         "n_inference_errors": sum(1 for r in rows if r["error_kind"] == "no_script"),
         "error_kinds": dict(_count(r["error_kind"] for r in rows)),
+        "n_cases_with_retries": sum(1 for r in rows if r.get("retries", 0) > 0),
+        "total_retries": sum(r.get("retries", 0) for r in rows),
     }
 
 
@@ -122,6 +125,12 @@ def main() -> None:
         help="LoRA adapter dir or checkpoint .safetensors to evaluate the fine-tuned student "
         "(omit for the base-model baseline)",
     )
+    ap.add_argument(
+        "--retries",
+        type=int,
+        default=0,
+        help="max retries with error feedback per case (0 = one-shot; production uses 3)",
+    )
     args = ap.parse_args()
 
     adapter_dir, adapter_label = resolve_adapter(args.adapter)
@@ -140,12 +149,13 @@ def main() -> None:
         cases = cases[: args.limit]
 
     who = f"fine-tuned ({adapter_label})" if adapter_dir else "base-student"
-    print(f"new-pipeline {who} eval: {len(cases)} held-out test cases")
-    print("(Gemma loads on the first case; zero-shot, no retries)\n")
+    mode = "one-shot" if args.retries == 0 else f"retry<={args.retries} w/ error feedback"
+    print(f"new-pipeline {who} eval ({mode}): {len(cases)} held-out test cases")
+    print("(Gemma loads on the first case)\n")
 
     rows: list[dict] = []
     for i, case in enumerate(cases, 1):
-        res = collect_case(case, teacher_fn=call_gemma_script_teacher, max_retries=0)
+        res = collect_case(case, teacher_fn=call_gemma_script_teacher, max_retries=args.retries)
         sc = res.scores
         rows.append(
             {
@@ -156,15 +166,17 @@ def main() -> None:
                 "output_format": res.output_format,
                 "accepted": res.accepted,
                 "error_kind": res.error_kind,
+                "retries": res.retries,
                 "scores": sc,
                 "reason": res.reason[:300],
             }
         )
         flag = "OK" if res.accepted else f"x:{res.error_kind}"
+        rtag = f" (retries={res.retries})" if res.retries else ""
         print(
             f"[{i:>2}/{len(cases)}] {flag:14} {res.case_id:42} "
             f"fv={sc.get('format_validity', 0):.0f} sc={sc.get('schema_compliance', 0):.0f} "
-            f"ld={sc.get('loadability', 0):.0f} ca={sc.get('content_accuracy', 0):.2f}",
+            f"ld={sc.get('loadability', 0):.0f} ca={sc.get('content_accuracy', 0):.2f}{rtag}",
             flush=True,
         )
 
@@ -177,25 +189,28 @@ def main() -> None:
     else:
         out = PROJECT_ROOT / "results" / f"baseline_newpipeline_gemma_{stamp}"
     out.mkdir(parents=True, exist_ok=True)
+    retry_desc = "one-shot, no retries" if args.retries == 0 else f"retry<={args.retries} w/ error feedback"
     summary = {
         "run_id": out.name,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "model": "models/gemma-4-e2b-it-bf16",
+        "model": os.environ.get("GEMMA_MLX_MODEL", "models/gemma-4-e2b-it-bf16"),
         "adapter": args.adapter,
+        "max_retries": args.retries,
         "role": "student_finetuned_newpipeline" if adapter_dir else "student_base_newpipeline",
         "backend": "mlx_vlm",
-        "pipeline": "envelope->script->sandbox->metrics (zero-shot, no retries, skill in-context)",
+        "pipeline": f"envelope->script->sandbox->metrics ({retry_desc}, skill in-context)",
         "eval_set": "held-out test split (seed=0, test_frac=0.1) reproduced from data/interim",
         "aggregate": agg,
         "cases": rows,
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
 
-    print(f"\n=== overall ({who}, new pipeline) ===")
+    print(f"\n=== overall ({who}, {mode}) ===")
     for m in METRICS:
         print(f"  {m:18} {agg['overall'][m]:.3f}")
     print(f"  accepted (all-pass)  {agg['n_accepted']}/{agg['n_cases']}")
     print(f"  error kinds          {agg['error_kinds']}")
+    print(f"  cases using retries  {agg['n_cases_with_retries']} (total {agg['total_retries']} retries)")
     print(f"\nwrote {out / 'summary.json'}")
 
 
