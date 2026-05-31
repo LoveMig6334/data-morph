@@ -1,7 +1,7 @@
 {
   "run_id": "eval_q8_iter400",
   "generated_at": "2026-05-31T22:20:33",
-  "model": "models/gemma-4-e2b-it-bf16",
+  "model": "models/gemma-4-e2b-it-8bit",
   "adapter": "models/lora_gemma4e2b_scriptgen",
   "role": "student_finetuned_newpipeline",
   "backend": "mlx_vlm",
