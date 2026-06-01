@@ -45,30 +45,36 @@ intermediate artefact.
 
 ### Status
 
-**W1–W6 complete; a fine-tuned, quantized student is production-validated.**
+**W1–W6 complete; W7 model surgery done — a 2.0 GB single-file student is production-validated.**
 
 - **Data (W3):** 800 verified teacher pairs (100% accept), split into
   `data/processed/{train,val,test}.jsonl` (650 / 80 / 70, content-disjoint).
 - **EDA (W4):** `notebook/w4_eda.ipynb` — training-readiness audit (balance,
   leakage, sequence-length budget).
 - **Fine-tune (W5):** Gemma-4 E2B distilled via LoRA (`mlx_vlm.lora`, SFT) on the
-  envelope→script task. Best checkpoint (iter-400) selected by held-out eval, then
-  **8-bit quantized → 5.5 GB**.
+  envelope→script task. Best checkpoint (iter-400) selected by held-out eval.
 - **Eval (W6):** on the held-out 70-case test set, through the full pipeline
-  (envelope → script → sandbox → 4 metrics):
+  (envelope → script → sandbox → 4 metrics), the fine-tuned student reaches
+  **65/70 one-shot** and **68/70 (0.971) at production retry≤3** — already ≥80%-of-teacher.
+- **Shrink (W7):** the multimodal base is mostly dead weight for this task. A
+  three-step surgery (`scripts/build_textonly_student.py` + `prune_vocab.py`) fuses the
+  adapter, strips the unused **vision + audio towers**, prunes the **262 k vocab → 16 k**
+  (the corpus uses ~4.5 k tokens; the vocab indexes the two biggest tensors), then
+  re-quantizes — all on a pure `gemma4_text` model loaded via `mlx_lm`:
 
-  | | all-pass | metrics |
-  |---|---:|---:|
-  | base student (zero-shot) | 41/70 | ~0.73 |
-  | fine-tuned, one-shot | 65/70 | 0.929 |
-  | **fine-tuned 8-bit, retry≤3 (production)** | **68/70** | **0.971** |
+  | Artifact | params | size | retry≤3 | % teacher |
+  |---|---:|---:|---:|---:|
+  | fine-tuned bf16 (runtime adapter) | 5.12 B | 9.6 GB | — | — |
+  | *prior 8-bit (full model)* | 5.1 B | 5.5 GB | 68/70 | ~97% |
+  | fused + text-only + vocab-16k, bf16 | 2.05 B | 3.8 GB | **69/70 (0.986)** | ~99% |
+  | **+ 8-bit (final ship artifact)** | **2.05 B** | **2.0 GB** | **67/70 (0.957)** | **~96%** |
 
-  That clears the **≥80%-of-teacher** target on every metric (Opus teacher ≈ 1.0)
-  — the production student reaches ~97% of teacher.
+  **9.6 GB → 2.0 GB (−79%)** with accuracy still well above the **≥80%-of-teacher**
+  target on every metric. Each cut is lossless-by-construction (strip/prune, guarded by
+  a tokenizer round-trip verification gate) or a small retry-recoverable numerical cost.
 
-**Next (W7):** package the model (fuse adapter → single 8-bit artifact, strip the
-unused vision/audio towers), push to Hugging Face Hub, ship the `pip`-installable
-wrapper. See `docs/progression.md` for the live tracker.
+**Next (W7 deployment):** push the 2.0 GB model to Hugging Face Hub with a model card,
+ship the `pip`-installable pipeline wrapper. See `docs/progression.md` for the live tracker.
 
 ## Supported formats
 
