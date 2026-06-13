@@ -1,178 +1,170 @@
 # data morph
 
-**Open Source File Data Migration with Fine-tuned Small Language Model**
+**Convert messy CSV / JSON / TXT files with a 2 GB language model that runs locally — for free.**
 
-Knowledge distillation from a large-model agent (Claude Opus + Agent Skill) into a fine-tuned Gemma 2B, so developers can convert between file formats locally for free instead of paying for frontier-LLM API calls.
+[![PyPI](https://img.shields.io/pypi/v/data-morph-gemma.svg)](https://pypi.org/project/data-morph-gemma/)
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-site-blue.svg)](https://lovemig6334.github.io/data-morph/)
+[![Model](https://img.shields.io/badge/🤗-model-yellow.svg)](https://huggingface.co/Bunnana/data-morph-gemma-2b)
+[![Dataset](https://img.shields.io/badge/🤗-dataset-yellow.svg)](https://huggingface.co/datasets/Bunnana/data-morph-conversions)
 
-AI Builders 2026 · Track: Agentic AI + NLP
+📖 **[Documentation](https://lovemig6334.github.io/data-morph/)** ·
+🚀 **[Quickstart](https://lovemig6334.github.io/data-morph/quickstart/)** ·
+✨ **[Showcase](https://lovemig6334.github.io/data-morph/showcase/)** ·
+📦 **[PyPI](https://pypi.org/project/data-morph-gemma/)**
 
-## Problem
+---
 
-Rule-based parsers can't handle messy, context-dependent file conversions. Frontier LLMs can, but they're expensive at scale. This project distills that capability into a 2B-parameter model that runs locally.
-
-## Approach
-
-1. **Teacher**: Claude Opus + Claude Code + Agent Skill generates 500–1000 verified training pairs.
-2. **Student**: Gemma 2B, fine-tuned with LoRA / QLoRA.
-3. **Target**: ≥80% of teacher accuracy across 4 metrics — Format Validity, Schema Compliance, Loadability, Content Accuracy.
-
-### Pipeline architecture
-
-Conversion is a **five-stage pipeline**, not a single end-to-end model call.
-The model only ever sees a small structured metadata envelope, never the
-full source file:
-
-```
-[source file]
-    │
-    ├─→ [1. Metadata extractor]  deterministic — schema + samples + warnings
-    ├─→ [2. Context summarizer]  Gemma 2B base — short NL summary
-    ↓
-[3. Script generator]   Claude Opus (training) → Gemma 2B fine-tuned (inference)
-    ↓ outputs an executable Python script
-[4. Sandbox executor]   deterministic — runs the script
-    ↓ converted output file
-[5. Validator]          the 4 W2 metrics — format, schema, load, content
-    ↓
-[output file]
-```
-
-**Why this shape**: distillation target narrows from "transform a whole
-file" (impractical for a 2 B model) to "read metadata, write a script"
-(realistic). The model never sees full file content, so the pipeline scales
-to arbitrary file sizes. Failures are debuggable — the script is a readable
-intermediate artefact.
-
-### Status
-
-**W1–W6 complete; W7 model surgery done — a 2.0 GB single-file student is production-validated.**
-
-- **Data (W3):** 800 verified teacher pairs (100% accept), split into
-  `data/processed/{train,val,test}.jsonl` (650 / 80 / 70, content-disjoint).
-- **EDA (W4):** `notebook/w4_eda.ipynb` — training-readiness audit (balance,
-  leakage, sequence-length budget).
-- **Fine-tune (W5):** Gemma-4 E2B distilled via LoRA (`mlx_vlm.lora`, SFT) on the
-  envelope→script task. Best checkpoint (iter-400) selected by held-out eval.
-- **Eval (W6):** on the held-out 70-case test set, through the full pipeline
-  (envelope → script → sandbox → 4 metrics), the fine-tuned student reaches
-  **65/70 one-shot** and **68/70 (0.971) at production retry≤3** — already ≥80%-of-teacher.
-- **Shrink (W7):** the multimodal base is mostly dead weight for this task. A
-  three-step surgery (`scripts/build_textonly_student.py` + `prune_vocab.py`) fuses the
-  adapter, strips the unused **vision + audio towers**, prunes the **262 k vocab → 16 k**
-  (the corpus uses ~4.5 k tokens; the vocab indexes the two biggest tensors), then
-  re-quantizes — all on a pure `gemma4_text` model loaded via `mlx_lm`:
-
-  | Artifact | params | size | retry≤3 | % teacher |
-  |---|---:|---:|---:|---:|
-  | fine-tuned bf16 (runtime adapter) | 5.12 B | 9.6 GB | — | — |
-  | *prior 8-bit (full model)* | 5.1 B | 5.5 GB | 68/70 | ~97% |
-  | fused + text-only + vocab-16k, bf16 | 2.05 B | 3.8 GB | **69/70 (0.986)** | ~99% |
-  | **+ 8-bit (final ship artifact)** | **2.05 B** | **2.0 GB** | **67/70 (0.957)** | **~96%** |
-
-  **9.6 GB → 2.0 GB (−79%)** with accuracy still well above the **≥80%-of-teacher**
-  target on every metric. Each cut is lossless-by-construction (strip/prune, guarded by
-  a tokenizer round-trip verification gate) or a small retry-recoverable numerical cost.
-
-**W7 deployment — done.** The model ships on the [Hugging Face Hub](https://huggingface.co/Bunnana/data-morph-gemma-2b)
-with a model card, and the pipeline is published as the `pip install data-morph-gemma` package — a public
-`datamorph.convert_file` API plus a `datamorph` CLI, with the 2.0 GB model auto-downloading from the Hub on
-first use. See `docs/progression.md` for the live tracker.
-
-## Supported formats
-
-CSV, JSON, TXT — in 5 use cases (CSV→JSON nested, JSON→CSV flattening, TXT log→CSV, CSV→TXT report, schema migration).
-
-## Install & use
-
-```bash
-pip install "data-morph-gemma[mlx]"   # Apple Silicon; the 2.0 GB model auto-downloads on first use
-```
+Rule-based parsers can't handle messy, context-dependent file conversions; frontier LLMs
+can, but they're expensive at scale and send your data to a third party. **data morph**
+distills that conversion ability from **Claude Opus** into a **2.0 GB Gemma student** that
+runs entirely on your machine — reaching **~96 % of the teacher's accuracy** at a fraction
+of the size.
 
 ```python
 from datamorph import convert_file
 
 result = convert_file("contacts.csv", "contacts.json")
-print(result.accepted, result.scores, result.output_path)
+print(result.accepted, result.scores)   # True {'format_validity': 1.0, 'loadability': 1.0}
 ```
 
-…or from the command line:
+## Install
+
+Runs on **Apple Silicon** via [MLX](https://github.com/ml-explore/mlx):
 
 ```bash
-datamorph convert contacts.csv contacts.json
+pip install "data-morph-gemma[mlx]"
 ```
 
-- **PyPI:** <https://pypi.org/project/data-morph-gemma/> · **Model:** <https://huggingface.co/Bunnana/data-morph-gemma-2b>
-- Import name is `datamorph`; the distribution is `data-morph-gemma` (PyPI blocks `data-morph` as too similar to an existing project).
+The 2.0 GB model **downloads automatically** from the Hugging Face Hub on first use (cached
+under `~/.cache/huggingface`). To point at a local copy instead, set `GEMMA_MLX_MODEL`.
 
-## Development setup (from source)
+> **Import vs. install name:** the distribution is **`data-morph-gemma`** (`pip install`),
+> but the import name is **`datamorph`**.
 
-Requires **Python 3.12** (chosen for stronger MLX support). Project is
-managed by [`uv`](https://docs.astral.sh/uv/).
+## Usage
+
+**Python**
+
+```python
+from datamorph import convert_file
+
+# formats are auto-detected from extensions
+result = convert_file("orders.csv", "orders.json")
+
+# …or set them explicitly, and add guidance
+result = convert_file(
+    "app.log", "events.csv",
+    input_format="txt", output_format="csv",
+    instruction="Columns: timestamp, level, source, message.",
+)
+
+result.accepted      # did the output pass validation?
+result.scores        # {'format_validity': 1.0, 'loadability': 1.0}
+result.script        # the Python script the model wrote
+result.output_path   # where it was written
+```
+
+**Command line**
 
 ```bash
-uv sync                        # creates .venv + installs the datamorph package (editable) + dev deps
-source .venv/bin/activate      # macOS / Linux
-# .venv\Scripts\activate       # Windows
+datamorph convert orders.csv orders.json
+datamorph convert app.log --output-format csv > events.csv   # pipe to stdout
+datamorph --version
 ```
 
-Add a new dependency: `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only). Run the tests with `uv run pytest`.
+Exit codes: `0` converted & validated · `1` ran but failed validation · `2` usage/input error.
 
-## Hardware / framework
+See the **[Showcase](https://lovemig6334.github.io/data-morph/showcase/)** for real, messy
+files converted end to end.
 
-- **Primary target**: MacBook Pro M5 Max (40 GPU cores, 120 GB unified memory) with **MLX**.
-- **Fallback**: Google Colab + PyTorch + Unsloth (used when MLX is unavailable, e.g. on Windows).
+## How it works
 
-## Repo structure
+Conversion is a **five-stage pipeline**, not a single model call. The model never sees the
+full source file — only a small **metadata envelope** (schema, samples, warnings). From
+that it writes a Python script, which is run in a sandbox and validated.
+
+![Pipeline architecture](progress_charts/01_pipeline_architecture.png)
 
 ```
-data/
-  raw/          # synthetic corpus from seeded generators (regenerable, gitignored)
-  interim/      # verified teacher pairs (envelope + analysis + script + scores)
-  processed/    # train/val/test chat JSONL for fine-tuning
-  test_set/     # 15 hand-crafted W2 baseline cases
-notebook/       # EDA (w4_eda), fine-tune scaffold (w5_finetune), extractor_tour
-datamorph/      # the installable package (import name: datamorph; dist: data-morph-gemma)
-  convert.py    # public API — convert_file() + ConversionResult
-  cli.py        # `datamorph convert in.csv out.json`
-  model.py      # resolve_model() — local path / $GEMMA_MLX_MODEL / HF Hub auto-download
-  extractor/    # Stage 1: deterministic metadata extractor — CSV, JSON, TXT (done)
-  evaluation/   # Stage 5: the 4 metrics + Opus-baseline runner (DO NOT EDIT)
-  data/         # generators (oracle), sandbox (Stage 4), teacher_script + collect (Stage 3)
-  features/     # format_pairs: verified pairs → chat JSONL + disjoint split
-  models/       # MLX inference (gemma_mlx, gemma_script_teacher) + OpenRouter client
-scripts/        # generate_corpus, collect_pairs, collect_all_parallel, build_dataset, baseline, plotting; W7 surgery
-skills/         # Agent-Skill prompts read by `claude -p` (file conversion + script generation)
-tests/          # unit tests (datamorph package incl. convert/CLI) + fixtures
-models/         # Gemma-4 E2B (local, gitignored) + fine-tuned checkpoints
-results/        # baseline run artefacts (per-run summary.json + plots)
-docs/           # specs, plans, weekly reports (gitignored)
+[file] → 1. extract envelope → 2. (summary) → 3. model writes a script
+       → 4. sandbox runs it → 5. validate (format · schema · load · content) → [output]
 ```
 
-## Timeline (8 weeks)
+Narrowing the task from "transform a whole file" to "read metadata, write a script" is what
+makes a small local model viable — and because the model never reads full content, it
+**scales to arbitrary file sizes** and leaves a **readable, debuggable** artefact: the
+script. Full details in the [docs](https://lovemig6334.github.io/data-morph/how-it-works/).
 
-| Week | Focus | Points |
-|------|-------|-------:|
-| 1 | Problem statement + use cases | 15 |
-| 2 | Metrics + Claude Opus baseline | 15 |
-| 3 | Teacher-generated training pairs | 15 |
-| 4 | EDA + data cleaning | 20 |
-| 5 | Fine-tune Gemma 2B (LoRA) | — |
-| 6 | Evaluation + error analysis | 20 |
-| 7 | Deployment (pip + HF Hub) | 15 |
-| 8 | Blog, slides, poster | — |
-| | **Total** | **100** (≥70 to pass) |
+## Supported conversions
 
-## Deliverables
+CSV, JSON, and TXT, in five patterns: **CSV→JSON** (nested), **JSON→CSV** (flatten),
+**TXT log→CSV**, **CSV→TXT** (report), and **schema migration**.
 
-- GitHub repo (this one)
-- Hugging Face Hub model + model card — ✅ [`Bunnana/data-morph-gemma-2b`](https://huggingface.co/Bunnana/data-morph-gemma-2b)
-- `pip install`-able Python package — ✅ [`data-morph-gemma`](https://pypi.org/project/data-morph-gemma/)
-- Medium blog post
-- Presentation slides + A1 poster
-- Facebook post (100–200 words)
+## Results
 
-## Ethics
+Evaluated through the full pipeline on a 70-case held-out test set (content-disjoint from
+training), scored on four metrics — Format Validity, Schema Compliance, Loadability,
+Content Accuracy.
 
-- Converted files may contain personal data → no uploads of user input.
-- Teacher bias propagates to student — documented in model card.
-- Hallucination risk mitigated by automated format/schema validation at inference time.
+| Artifact | params | size | retry ≤ 3 | % of teacher |
+|---|---:|---:|---:|---:|
+| fine-tuned (bf16) | 5.12 B | 9.6 GB | — | — |
+| fused · text-only · vocab-16k (bf16) | 2.05 B | 3.8 GB | 69/70 (0.986) | ~99 % |
+| **+ 8-bit — shipped** | **2.05 B** | **2.0 GB** | **67/70 (0.957)** | **~96 %** |
+
+A three-step model surgery (fuse the LoRA adapter → strip the unused vision/audio towers →
+prune the vocabulary 262 k → 16 k → 8-bit quantize) shrinks the student **9.6 GB → 2.0 GB
+(−79 %)** while staying well above the ≥ 80 %-of-teacher target on every metric.
+
+## Contributing & development
+
+Built from source with [`uv`](https://docs.astral.sh/uv/) on **Python 3.12**:
+
+```bash
+git clone https://github.com/LoveMig6334/data-morph
+cd data-morph
+uv sync                 # creates .venv + installs the package (editable) + dev tools
+uv run pytest           # run the test suite
+uv run mkdocs serve     # preview the docs locally
+```
+
+Project layout:
+
+```
+datamorph/            the installable package (import name: datamorph)
+  convert.py          public API — convert_file() + ConversionResult
+  cli.py              the `datamorph` command-line interface
+  model.py            model resolution (local path / $GEMMA_MLX_MODEL / HF Hub)
+  extractor/          metadata extractor — CSV, JSON, TXT
+  evaluation/         the four metrics + baseline runner
+  data/               synthetic generators, sandbox, teacher + collection orchestrator
+  features/           verified pairs → chat JSONL + disjoint split
+  models/             MLX inference + a hosted (OpenRouter) client
+scripts/              corpus generation, pair collection, dataset build, baselines, model surgery
+skills/               Agent-Skill prompts used to generate training data
+tests/                unit tests + fixtures
+docs_src/             documentation site sources (MkDocs Material)
+```
+
+Contributions are welcome — please open an issue or PR. Run `uv run pytest` and
+`uv run ruff check` before submitting.
+
+## Limitations
+
+- A small model: reliable on the five trained conversion patterns; messy but in-pattern
+  inputs are handled well, far-out-of-distribution ones may fail (the pipeline validates
+  and retries, but does not guarantee success).
+- Hallucination / data-loss risk is mitigated — not eliminated — by automated
+  format/schema validation at inference time.
+- Teacher (Claude Opus) bias can propagate to the student.
+- Converted files may contain personal data; everything runs locally — no inputs are uploaded.
+
+## License & credits
+
+- **Code:** [MIT](LICENSE).
+- **Model:** a derivative of Google's **Gemma**, governed by the
+  [Gemma Terms of Use](https://ai.google.dev/gemma/terms); distilled from **Claude Opus**.
+- **Model & data:** [`data-morph-gemma-2b`](https://huggingface.co/Bunnana/data-morph-gemma-2b)
+  · [`data-morph-conversions`](https://huggingface.co/datasets/Bunnana/data-morph-conversions).
