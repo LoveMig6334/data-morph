@@ -9,9 +9,11 @@ description = "Distill a CSV/JSON/TXT file-conversion capability from Claude Opu
 readme = "README.md"
 requires-python = ">=3.12"
 # Minimal runtime deps: the generated conversion scripts (and the loadability
-# metric) use pandas. Inference needs MLX — installed via the `mlx` extra,
-# which is Apple-Silicon-only, so it is kept out of the base requirements.
+# metric) use pandas; huggingface_hub downloads the published model on first use.
+# Inference needs MLX — installed via the `mlx` extra, which is Apple-Silicon-only,
+# so it is kept out of the base requirements.
 dependencies = [
+    "huggingface-hub>=0.30",
     "pandas>=3.0.2",
 ]
 

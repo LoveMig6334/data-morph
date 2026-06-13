@@ -116,8 +116,43 @@ def test_missing_input_raises(tmp_path):
 
 
 def test_resolve_model_missing_path_raises():
+    # A path-like string that doesn't exist (and isn't a repo id) errors clearly.
     with pytest.raises(FileNotFoundError):
         resolve_model("/definitely/not/a/real/model/path")
+
+
+def test_resolve_model_returns_existing_local_path(tmp_path):
+    assert resolve_model(str(tmp_path)) == str(tmp_path)
+
+
+def test_resolve_model_downloads_explicit_repo_id(monkeypatch, tmp_path):
+    called = {}
+
+    def fake_download(repo_id, *args, **kwargs):
+        called["repo"] = repo_id
+        return str(tmp_path / "cache")
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", fake_download)
+    out = resolve_model("Owner/some-model")
+    assert called["repo"] == "Owner/some-model"
+    assert out == str(tmp_path / "cache")
+
+
+def test_resolve_model_falls_back_to_hub(monkeypatch, tmp_path):
+    import datamorph.model as dm
+
+    monkeypatch.delenv("GEMMA_MLX_MODEL", raising=False)
+    monkeypatch.setattr(dm, "DEFAULT_MODEL_DIR", tmp_path / "no-local-model")
+    called = {}
+
+    def fake_download(repo_id, *args, **kwargs):
+        called["repo"] = repo_id
+        return str(tmp_path / "hub-cache")
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", fake_download)
+    out = resolve_model()
+    assert called["repo"] == dm.DEFAULT_HF_REPO
+    assert out == str(tmp_path / "hub-cache")
 
 
 @pytest.mark.performance
