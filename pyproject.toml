@@ -23,6 +23,9 @@ mlx = [
     "mlx-vlm>=0.5.0",
 ]
 
+[project.scripts]
+datamorph = "datamorph.cli:main"
+
 [dependency-groups]
 # Local development installs MLX too (the notebooks + pipeline eval need it),
 # so the inference deps are listed here as well as in the optional `mlx` extra
