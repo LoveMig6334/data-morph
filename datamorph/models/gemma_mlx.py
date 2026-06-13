@@ -14,7 +14,17 @@ MODEL_ID = os.environ.get("GEMMA_MLX_MODEL", str(_LOCAL_PATH))
 # GEMMA_TEXT_ONLY=1 to select this path (used by the W7 text-only student).
 TEXT_ONLY = os.environ.get("GEMMA_TEXT_ONLY", "").lower() in ("1", "true", "yes")
 
-_state: dict = {"model": None, "processor": None, "load_sec": None, "adapter": None}
+# Model selection lives in _state so it can be changed at runtime (via use_model)
+# without re-importing the module. The env vars seed the defaults, so existing
+# scripts/notebooks that set GEMMA_MLX_MODEL / GEMMA_TEXT_ONLY keep working.
+_state: dict = {
+    "model": None,
+    "processor": None,
+    "load_sec": None,
+    "adapter": None,
+    "model_id": MODEL_ID,
+    "text_only": TEXT_ONLY,
+}
 
 
 def use_adapter(adapter_path: str | None) -> None:
@@ -26,6 +36,19 @@ def use_adapter(adapter_path: str | None) -> None:
     if adapter_path != _state["adapter"]:
         _state["adapter"] = adapter_path
         _state["model"] = None  # force reload with the new adapter (or base)
+
+
+def use_model(model_id: str, *, text_only: bool = True) -> None:
+    """Select which model to load (local dir path or HF id).
+
+    Mirrors ``use_adapter``: changing the selection forces a reload on the next
+    ``generate`` call. ``text_only=True`` loads via mlx_lm (the stripped W7
+    student); ``False`` uses mlx_vlm (the multimodal base).
+    """
+    if model_id != _state["model_id"] or text_only != _state["text_only"]:
+        _state["model_id"] = model_id
+        _state["text_only"] = text_only
+        _state["model"] = None  # force reload with the new model
 
 
 @dataclass
@@ -43,21 +66,23 @@ def _ensure_loaded() -> None:
     if _state["model"] is not None:
         return
     t0 = time.time()
-    if TEXT_ONLY:
+    model_id = _state["model_id"]
+    text_only = _state["text_only"]
+    if text_only:
         import mlx_lm  # lazy import
 
-        loaded = mlx_lm.load(MODEL_ID, adapter_path=_state["adapter"])
+        loaded = mlx_lm.load(model_id, adapter_path=_state["adapter"])
         model, processor = loaded[0], loaded[1]
     else:
         from mlx_vlm import load  # lazy import
 
-        model, processor = load(MODEL_ID, adapter_path=_state["adapter"])
+        model, processor = load(model_id, adapter_path=_state["adapter"])
     _state["model"] = model
     _state["processor"] = processor
     _state["load_sec"] = round(time.time() - t0, 2)
     tag = f" + adapter {_state['adapter']}" if _state["adapter"] else ""
-    backend = "mlx_lm/text" if TEXT_ONLY else "mlx_vlm"
-    print(f"[gemma_mlx] loaded {MODEL_ID}{tag} via {backend} in {_state['load_sec']}s")
+    backend = "mlx_lm/text" if text_only else "mlx_vlm"
+    print(f"[gemma_mlx] loaded {model_id}{tag} via {backend} in {_state['load_sec']}s")
 
 
 def _generate_text_only(messages: list[dict], max_tokens: int) -> GenerationResult:
@@ -89,7 +114,7 @@ def _generate_text_only(messages: list[dict], max_tokens: int) -> GenerationResu
         n_generated_tokens=n_gen,
         elapsed_sec=round(elapsed, 2),
         tokens_per_sec=tps,
-        model_id=MODEL_ID,
+        model_id=_state["model_id"],
         truncated=n_gen >= max_tokens,
     )
 
@@ -97,7 +122,7 @@ def _generate_text_only(messages: list[dict], max_tokens: int) -> GenerationResu
 def generate(messages: list[dict], max_tokens: int = 4096) -> GenerationResult:
     """Run greedy generation on the given chat messages (text-only)."""
     _ensure_loaded()
-    if TEXT_ONLY:
+    if _state["text_only"]:
         return _generate_text_only(messages, max_tokens)
 
     from mlx_vlm import generate as vlm_generate  # lazy
@@ -133,6 +158,6 @@ def generate(messages: list[dict], max_tokens: int = 4096) -> GenerationResult:
         n_generated_tokens=n_gen,
         elapsed_sec=round(elapsed, 2),
         tokens_per_sec=round(tps, 2),
-        model_id=MODEL_ID,
+        model_id=_state["model_id"],
         truncated=truncated,
     )
