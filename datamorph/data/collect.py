@@ -11,12 +11,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from src.data.envelope import extract_envelope
-from src.data.generators.base import EXT_BY_FORMAT
-from src.data.sandbox import run_script
-from src.data.teacher_script import ScriptResult, call_script_teacher
-from src.evaluation.metrics import score_all
-from src.evaluation.runner import CaseSpec, discover_cases
+from datamorph.data.envelope import extract_envelope
+from datamorph.data.generators.base import EXT_BY_FORMAT
+from datamorph.data.sandbox import run_script
+from datamorph.data.teacher_script import ScriptResult, call_script_teacher
+from datamorph.evaluation.metrics import score_all
+from datamorph.evaluation.runner import CaseSpec, discover_cases
 
 CA_MIN = 0.95
 TeacherFn = Callable[..., ScriptResult]

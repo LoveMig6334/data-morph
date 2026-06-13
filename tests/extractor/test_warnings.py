@@ -1,4 +1,4 @@
-"""Unit tests for src/extractor/warning_rules.py."""
+"""Unit tests for datamorph/extractor/warning_rules.py."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.extractor.warning_rules import MetadataWarning  # noqa: E402
+from datamorph.extractor.warning_rules import MetadataWarning  # noqa: E402
 
 
 class TestMetadataWarning:
@@ -48,7 +48,7 @@ class TestMetadataWarning:
 
 import pytest  # noqa: E402  (used in test_is_frozen)
 
-from src.extractor.warning_rules import (  # noqa: E402
+from datamorph.extractor.warning_rules import (  # noqa: E402
     check_empty_file,
     check_missing_header,
     check_duplicate_column_name,
@@ -115,7 +115,7 @@ class TestLatin1Fallback:
         assert check_latin1_fallback(final_encoding="utf-8", attempted=[]) is None
 
 
-from src.extractor.warning_rules import (  # noqa: E402
+from datamorph.extractor.warning_rules import (  # noqa: E402
     check_repeating_entity,
     check_numeric_column_quote_risk,
     check_mixed_dtype_column,
@@ -210,7 +210,7 @@ class TestLikelyDateColumn:
         assert check_likely_date_column(column=col) is None
 
 
-from src.extractor.warning_rules import (  # noqa: E402
+from datamorph.extractor.warning_rules import (  # noqa: E402
     check_optional_key,
     check_mixed_type_path,
     check_deeply_nested,
@@ -218,7 +218,7 @@ from src.extractor.warning_rules import (  # noqa: E402
     check_heterogeneous_array,
     check_likely_date_value,
 )
-from src.extractor.json_walker import PathStats  # noqa: E402
+from datamorph.extractor.json_walker import PathStats  # noqa: E402
 
 
 def _make_stats(**overrides) -> PathStats:

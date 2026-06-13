@@ -1,6 +1,6 @@
 """Gemma script-generation 'teacher' — the un-fine-tuned student on the new pipeline.
 
-Drop-in replacement for ``src.data.teacher_script.call_script_teacher`` (same
+Drop-in replacement for ``datamorph.data.teacher_script.call_script_teacher`` (same
 ``ScriptResult`` contract and ``(envelope, instruction, output_format, *, feedback)``
 signature), but the script author is the local Gemma model via MLX instead of Opus.
 
@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from src.data.teacher_script import ScriptResult, parse_teacher_output
+from datamorph.data.teacher_script import ScriptResult, parse_teacher_output
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILL_REL_PATH = "skills/script_generation_teacher.md"
@@ -72,7 +72,7 @@ def call_gemma_script_teacher(
     max_tokens: int = 4096,
 ) -> ScriptResult:
     """Generate <analysis> + <script> with the local Gemma model; parse into a ScriptResult."""
-    from src.models.gemma_mlx import generate as mlx_generate  # lazy: keep MLX import optional
+    from datamorph.models.gemma_mlx import generate as mlx_generate  # lazy: keep MLX import optional
 
     prompt = build_gemma_prompt(envelope, instruction, output_format, feedback)
     try:

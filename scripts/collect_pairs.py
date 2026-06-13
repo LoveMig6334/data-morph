@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.data.collect import collect_corpus  # noqa: E402
+from datamorph.data.collect import collect_corpus  # noqa: E402
 
 
 def _main() -> int:

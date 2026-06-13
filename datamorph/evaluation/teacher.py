@@ -152,8 +152,8 @@ def _call_gemma(
     output_format: str,
     prompt_hint: str,
 ) -> TeacherResult:
-    from src.evaluation.output_cleanup import clean_model_output
-    from src.models.gemma_mlx import generate as mlx_generate
+    from datamorph.evaluation.output_cleanup import clean_model_output
+    from datamorph.models.gemma_mlx import generate as mlx_generate
 
     skill = _load_skill_text()
     user_body = build_user_prompt(

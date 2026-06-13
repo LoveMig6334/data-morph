@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.extractor.warning_rules import (  # noqa: E402
+from datamorph.extractor.warning_rules import (  # noqa: E402
     check_no_pattern_detected,
     check_mixed_line_structure,
     check_inconsistent_field_count,
@@ -64,7 +64,7 @@ class TestLikelyTimestampPrefix:
         assert check_likely_timestamp_prefix(record_pattern="delimited") is None
 
 
-from src.extractor.txt_extractor import infer_line_pattern  # noqa: E402
+from datamorph.extractor.txt_extractor import infer_line_pattern  # noqa: E402
 
 
 class TestInferLinePattern:
@@ -120,7 +120,7 @@ class TestInferLinePattern:
 
 import json  # noqa: E402
 
-from src.extractor.txt_extractor import TXTExtractor  # noqa: E402
+from datamorph.extractor.txt_extractor import TXTExtractor  # noqa: E402
 
 
 def _write(tmp_path: Path, name: str, text: str) -> Path:

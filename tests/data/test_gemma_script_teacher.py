@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.data.teacher_script import ScriptResult
-from src.models import gemma_script_teacher as gst
+from datamorph.data.teacher_script import ScriptResult
+from datamorph.models import gemma_script_teacher as gst
 
 
 @dataclass
@@ -30,7 +30,7 @@ def _patch_generate(monkeypatch, text):
         seen.append(messages)
         return _FakeGen(text=text)
 
-    import src.models.gemma_mlx as mlx
+    import datamorph.models.gemma_mlx as mlx
     monkeypatch.setattr(mlx, "generate", fake)
     return seen
 
@@ -64,7 +64,7 @@ def test_prompt_includes_skill_envelope_and_contract(monkeypatch):
 
 
 def test_generate_exception_returns_failed_result(monkeypatch):
-    import src.models.gemma_mlx as mlx
+    import datamorph.models.gemma_mlx as mlx
     monkeypatch.setattr(gst, "_SKILL_CACHE", {"text": "SKILL"})
 
     def boom(messages, max_tokens=4096):

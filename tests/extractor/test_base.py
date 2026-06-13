@@ -1,4 +1,4 @@
-"""Unit tests for src/extractor/base.py."""
+"""Unit tests for datamorph/extractor/base.py."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.extractor.base import MetadataExtractor  # noqa: E402
+from datamorph.extractor.base import MetadataExtractor  # noqa: E402
 
 
 class TestMetadataExtractorContract:

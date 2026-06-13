@@ -14,7 +14,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.features.format_pairs import split_records, to_chat_record  # noqa: E402
+from datamorph.features.format_pairs import split_records, to_chat_record  # noqa: E402
 
 _SKIP = {"collect_manifest.json", "manifest.json"}
 

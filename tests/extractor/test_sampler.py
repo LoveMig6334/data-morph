@@ -1,4 +1,4 @@
-"""Unit tests for src/extractor/sampler.py."""
+"""Unit tests for datamorph/extractor/sampler.py."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.extractor.sampler import sample_csv  # noqa: E402
+from datamorph.extractor.sampler import sample_csv  # noqa: E402
 
 
 def _write_csv(path: Path, rows: list[list[str]]) -> None:

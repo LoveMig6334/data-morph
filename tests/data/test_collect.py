@@ -5,11 +5,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.data.collect import PairResult, collect_case, collect_corpus  # noqa: E402
-from src.data.generators import uc3_txt_log_to_csv as uc3  # noqa: E402
-from src.data.generators.base import write_case  # noqa: E402
-from src.data.teacher_script import ScriptResult  # noqa: E402
-from src.evaluation.runner import discover_cases  # noqa: E402
+from datamorph.data.collect import PairResult, collect_case, collect_corpus  # noqa: E402
+from datamorph.data.generators import uc3_txt_log_to_csv as uc3  # noqa: E402
+from datamorph.data.generators.base import write_case  # noqa: E402
+from datamorph.data.teacher_script import ScriptResult  # noqa: E402
+from datamorph.evaluation.runner import discover_cases  # noqa: E402
 
 # A correct uc3 conversion script: [ts] LEVEL source: message -> CSV.
 _GOOD_UC3_SCRIPT = '''

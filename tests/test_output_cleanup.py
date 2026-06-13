@@ -1,9 +1,9 @@
-"""Tests for src.evaluation.output_cleanup.clean_model_output."""
+"""Tests for datamorph.evaluation.output_cleanup.clean_model_output."""
 
 from __future__ import annotations
 
 
-from src.evaluation.output_cleanup import clean_model_output
+from datamorph.evaluation.output_cleanup import clean_model_output
 
 
 def test_pass_through_clean_csv():

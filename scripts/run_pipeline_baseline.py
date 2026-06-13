@@ -32,10 +32,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.data.collect import collect_case  # noqa: E402
-from src.evaluation.runner import discover_cases  # noqa: E402
-from src.features.format_pairs import split_records  # noqa: E402
-from src.models.gemma_script_teacher import call_gemma_script_teacher  # noqa: E402
+from datamorph.data.collect import collect_case  # noqa: E402
+from datamorph.evaluation.runner import discover_cases  # noqa: E402
+from datamorph.features.format_pairs import split_records  # noqa: E402
+from datamorph.models.gemma_script_teacher import call_gemma_script_teacher  # noqa: E402
 
 METRICS = ["format_validity", "schema_compliance", "loadability", "content_accuracy"]
 CX_ORDER = ["simple", "medium", "complex"]
@@ -135,7 +135,7 @@ def main() -> None:
 
     adapter_dir, adapter_label = resolve_adapter(args.adapter)
     if adapter_dir:
-        from src.models import gemma_mlx
+        from datamorph.models import gemma_mlx
 
         gemma_mlx.use_adapter(adapter_dir)
 

@@ -1,5 +1,5 @@
 {
   "extraPaths": ["."],
-  "include": ["src", "tests", "scripts"],
+  "include": ["datamorph", "tests", "scripts"],
   "exclude": [".venv", "**/__pycache__"]
 }

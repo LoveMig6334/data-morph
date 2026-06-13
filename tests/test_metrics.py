@@ -1,4 +1,4 @@
-"""Unit tests for src/evaluation/metrics.py.
+"""Unit tests for datamorph/evaluation/metrics.py.
 
 Each metric is tested with a passing case, a failing case, and edge cases.
 """
@@ -8,10 +8,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Make src/ importable when running pytest from the repo root.
+# Make datamorph/ importable when running pytest from the repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.evaluation.metrics import (  # noqa: E402
+from datamorph.evaluation.metrics import (  # noqa: E402
     content_accuracy,
     format_validity,
     loadability,

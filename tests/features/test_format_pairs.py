@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.features.format_pairs import split_records, to_chat_record  # noqa: E402
+from datamorph.features.format_pairs import split_records, to_chat_record  # noqa: E402
 
 
 def _rec(case_id: str):

@@ -15,14 +15,14 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.data.generators import (  # noqa: E402
+from datamorph.data.generators import (  # noqa: E402
     uc1_csv_to_json,
     uc2_json_to_csv,
     uc3_txt_log_to_csv,
     uc4_csv_to_txt_report,
     uc5_schema_migration,
 )
-from src.data.generators.base import GeneratedCase, write_case  # noqa: E402
+from datamorph.data.generators.base import GeneratedCase, write_case  # noqa: E402
 
 _GENERATORS = [
     uc1_csv_to_json.generate,

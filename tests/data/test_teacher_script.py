@@ -20,7 +20,7 @@ class TestSkillFile:
         assert "pandas" in text and "standard library" in text
 
 
-from src.data.teacher_script import (  # noqa: E402
+from datamorph.data.teacher_script import (  # noqa: E402
     ScriptResult,
     build_script_prompt,
     parse_teacher_output,
@@ -77,10 +77,10 @@ import pytest  # noqa: E402
 @pytest.mark.teacher
 def test_live_opus_writes_runnable_script(tmp_path):
     """Opt-in: requires `claude` CLI + Opus access. Run with `-m teacher`."""
-    from src.data.collect import collect_case
-    from src.data.generators import uc3_txt_log_to_csv as uc3
-    from src.data.generators.base import write_case
-    from src.evaluation.runner import discover_cases
+    from datamorph.data.collect import collect_case
+    from datamorph.data.generators import uc3_txt_log_to_csv as uc3
+    from datamorph.data.generators.base import write_case
+    from datamorph.evaluation.runner import discover_cases
 
     case_obj = uc3.generate(seed=99, complexity="simple")
     write_case(case_obj, tmp_path, "gen_000001")

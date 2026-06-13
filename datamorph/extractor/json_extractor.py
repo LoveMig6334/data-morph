@@ -429,7 +429,7 @@ def _main() -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        prog="python -m src.extractor.json_extractor",
+        prog="python -m datamorph.extractor.json_extractor",
         description="Extract metadata envelope from a JSON file.",
     )
     parser.add_argument("file", help="Path to a .json file")

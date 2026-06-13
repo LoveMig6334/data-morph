@@ -1,4 +1,4 @@
-"""Integration tests for src/extractor/csv_extractor.py."""
+"""Integration tests for datamorph/extractor/csv_extractor.py."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.extractor.csv_extractor import (  # noqa: E402
+from datamorph.extractor.csv_extractor import (  # noqa: E402
     count_data_rows,
     detect_encoding,
     sniff_dialect,
@@ -84,7 +84,7 @@ class TestCountDataRows:
         assert n == 0
 
 
-from src.extractor.csv_extractor import (  # noqa: E402
+from datamorph.extractor.csv_extractor import (  # noqa: E402
     build_column_metadata,
     infer_column_dtype,
 )
@@ -183,7 +183,7 @@ class TestBuildColumnMetadata:
         assert len(m["sample_values"]) == 3
 
 
-from src.extractor.csv_extractor import CSVExtractor  # noqa: E402
+from datamorph.extractor.csv_extractor import CSVExtractor  # noqa: E402
 
 
 def _codes(envelope: dict) -> list[str]:

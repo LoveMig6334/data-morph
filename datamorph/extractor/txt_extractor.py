@@ -182,7 +182,7 @@ def _main() -> int:
     import json
 
     parser = argparse.ArgumentParser(
-        prog="python -m src.extractor.txt_extractor",
+        prog="python -m datamorph.extractor.txt_extractor",
         description="Extract metadata envelope from a .txt/.log file.",
     )
     parser.add_argument("file", help="Path to a .txt or .log file")

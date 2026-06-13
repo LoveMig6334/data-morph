@@ -1,6 +1,6 @@
 """Stage 3 — Claude Opus writes a conversion script from a metadata envelope.
 
-Mirrors src/evaluation/teacher.py::_call_opus (same `claude -p` invocation), but
+Mirrors datamorph/evaluation/teacher.py::_call_opus (same `claude -p` invocation), but
 the model returns <analysis> + <script> rather than a converted file. The live
 call is exercised only by opt-in tests; parsing/prompt building are pure.
 """

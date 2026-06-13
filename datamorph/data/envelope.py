@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from src.extractor import CSVExtractor, JSONExtractor, MetadataExtractor, TXTExtractor
+from datamorph.extractor import CSVExtractor, JSONExtractor, MetadataExtractor, TXTExtractor
 
 _EXTRACTORS: dict[str, type[MetadataExtractor]] = {
     "csv": CSVExtractor,

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.data.envelope import extract_envelope  # noqa: E402
+from datamorph.data.envelope import extract_envelope  # noqa: E402
 
 
 class TestExtractEnvelope:

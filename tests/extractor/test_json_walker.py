@@ -1,4 +1,4 @@
-"""Unit tests for src/extractor/json_walker.py."""
+"""Unit tests for datamorph/extractor/json_walker.py."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pytest  # noqa: E402
 
-from src.extractor.json_walker import PathStats, walk  # noqa: E402
+from datamorph.extractor.json_walker import PathStats, walk  # noqa: E402
 
 
 class TestPathStatsDataclass:

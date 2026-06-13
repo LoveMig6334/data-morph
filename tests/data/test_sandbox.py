@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.data.sandbox import run_script  # noqa: E402
+from datamorph.data.sandbox import run_script  # noqa: E402
 
 _GOOD = (
     "import sys\n"

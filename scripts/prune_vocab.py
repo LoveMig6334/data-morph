@@ -70,7 +70,7 @@ def inference_prompt_texts() -> list[str]:
 
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
-    from src.models.gemma_script_teacher import build_gemma_prompt  # noqa: E402
+    from datamorph.models.gemma_script_teacher import build_gemma_prompt  # noqa: E402
 
     env = {"format": "csv", "schema": {"columns": ["a", "b"]}, "sample_rows": [{"a": 1}]}
     texts = []

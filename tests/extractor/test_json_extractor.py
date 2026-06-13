@@ -1,4 +1,4 @@
-"""Integration tests for src/extractor/json_extractor.py."""
+"""Integration tests for datamorph/extractor/json_extractor.py."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import pytest  # noqa: E402
 
-from src.extractor.json_extractor import JSONExtractor  # noqa: E402
+from datamorph.extractor.json_extractor import JSONExtractor  # noqa: E402
 
 FIXTURES = Path(__file__).parent / "fixtures" / "json"
 

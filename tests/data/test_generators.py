@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.data.generators.base import GeneratedCase, make_faker, write_case  # noqa: E402
+from datamorph.data.generators.base import GeneratedCase, make_faker, write_case  # noqa: E402
 
 
 class TestMakeFaker:
@@ -40,7 +40,7 @@ class TestWriteCase:
         assert case_dir.name == "gen_000001"
 
 
-from src.evaluation.metrics import score_all  # noqa: E402
+from datamorph.evaluation.metrics import score_all  # noqa: E402
 
 
 def _assert_oracle_self_consistent(case: GeneratedCase):
@@ -56,7 +56,7 @@ def _assert_oracle_self_consistent(case: GeneratedCase):
 
 class TestUC3:
     def test_deterministic(self):
-        from src.data.generators import uc3_txt_log_to_csv as uc3
+        from datamorph.data.generators import uc3_txt_log_to_csv as uc3
 
         a = uc3.generate(seed=1, complexity="simple")
         b = uc3.generate(seed=1, complexity="simple")
@@ -64,13 +64,13 @@ class TestUC3:
         assert a.expected_text == b.expected_text
 
     def test_oracle_self_consistent(self):
-        from src.data.generators import uc3_txt_log_to_csv as uc3
+        from datamorph.data.generators import uc3_txt_log_to_csv as uc3
 
         for complexity in ("simple", "medium", "complex"):
             _assert_oracle_self_consistent(uc3.generate(seed=2, complexity=complexity))
 
     def test_shape(self):
-        from src.data.generators import uc3_txt_log_to_csv as uc3
+        from datamorph.data.generators import uc3_txt_log_to_csv as uc3
 
         case = uc3.generate(seed=3, complexity="simple")
         assert case.input_format == "txt"
@@ -80,20 +80,20 @@ class TestUC3:
 
 class TestUC1:
     def test_deterministic(self):
-        from src.data.generators import uc1_csv_to_json as uc1
+        from datamorph.data.generators import uc1_csv_to_json as uc1
 
         a = uc1.generate(seed=1, complexity="medium")
         b = uc1.generate(seed=1, complexity="medium")
         assert a.input_text == b.input_text and a.expected_text == b.expected_text
 
     def test_oracle_self_consistent(self):
-        from src.data.generators import uc1_csv_to_json as uc1
+        from datamorph.data.generators import uc1_csv_to_json as uc1
 
         for c in ("simple", "medium", "complex"):
             _assert_oracle_self_consistent(uc1.generate(seed=2, complexity=c))
 
     def test_shape(self):
-        from src.data.generators import uc1_csv_to_json as uc1
+        from datamorph.data.generators import uc1_csv_to_json as uc1
 
         case = uc1.generate(seed=3, complexity="simple")
         assert case.input_format == "csv" and case.output_format == "json"
@@ -104,20 +104,20 @@ class TestUC1:
 
 class TestUC2:
     def test_deterministic(self):
-        from src.data.generators import uc2_json_to_csv as uc2
+        from datamorph.data.generators import uc2_json_to_csv as uc2
 
         a = uc2.generate(seed=1, complexity="medium")
         b = uc2.generate(seed=1, complexity="medium")
         assert a.input_text == b.input_text and a.expected_text == b.expected_text
 
     def test_oracle_self_consistent(self):
-        from src.data.generators import uc2_json_to_csv as uc2
+        from datamorph.data.generators import uc2_json_to_csv as uc2
 
         for c in ("simple", "medium", "complex"):
             _assert_oracle_self_consistent(uc2.generate(seed=2, complexity=c))
 
     def test_simple_header(self):
-        from src.data.generators import uc2_json_to_csv as uc2
+        from datamorph.data.generators import uc2_json_to_csv as uc2
 
         case = uc2.generate(seed=3, complexity="simple")
         assert case.input_format == "json" and case.output_format == "csv"
@@ -126,20 +126,20 @@ class TestUC2:
 
 class TestUC4:
     def test_deterministic(self):
-        from src.data.generators import uc4_csv_to_txt_report as uc4
+        from datamorph.data.generators import uc4_csv_to_txt_report as uc4
 
         a = uc4.generate(seed=1, complexity="medium")
         b = uc4.generate(seed=1, complexity="medium")
         assert a.input_text == b.input_text and a.expected_text == b.expected_text
 
     def test_oracle_self_consistent(self):
-        from src.data.generators import uc4_csv_to_txt_report as uc4
+        from datamorph.data.generators import uc4_csv_to_txt_report as uc4
 
         for c in ("simple", "medium", "complex"):
             _assert_oracle_self_consistent(uc4.generate(seed=2, complexity=c))
 
     def test_has_required_substrings(self):
-        from src.data.generators import uc4_csv_to_txt_report as uc4
+        from datamorph.data.generators import uc4_csv_to_txt_report as uc4
 
         case = uc4.generate(seed=3, complexity="simple")
         assert case.output_format == "txt"
@@ -151,14 +151,14 @@ class TestUC4:
 
 class TestUC5:
     def test_deterministic(self):
-        from src.data.generators import uc5_schema_migration as uc5
+        from datamorph.data.generators import uc5_schema_migration as uc5
 
         a = uc5.generate(seed=1, complexity="medium")
         b = uc5.generate(seed=1, complexity="medium")
         assert a.input_text == b.input_text and a.expected_text == b.expected_text
 
     def test_oracle_self_consistent(self):
-        from src.data.generators import uc5_schema_migration as uc5
+        from datamorph.data.generators import uc5_schema_migration as uc5
 
         for c in ("simple", "medium", "complex"):
             _assert_oracle_self_consistent(uc5.generate(seed=2, complexity=c))
@@ -166,7 +166,7 @@ class TestUC5:
     def test_renames_keys(self):
         import json as _json
 
-        from src.data.generators import uc5_schema_migration as uc5
+        from datamorph.data.generators import uc5_schema_migration as uc5
 
         case = uc5.generate(seed=3, complexity="simple")
         assert case.input_format == "json" and case.output_format == "json"
