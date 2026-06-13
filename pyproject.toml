@@ -8,6 +8,21 @@ version = "0.1.0"
 description = "Distill a CSV/JSON/TXT file-conversion capability from Claude Opus into a fine-tuned Gemma 2B (LoRA/QLoRA)."
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Thatt Bunnag", email = "tom.tom.thanet@gmail.com" },
+]
+keywords = ["file-conversion", "csv", "json", "gemma", "mlx", "knowledge-distillation", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Utilities",
+    "Operating System :: MacOS",
+]
 # Minimal runtime deps: the generated conversion scripts (and the loadability
 # metric) use pandas; huggingface_hub downloads the published model on first use.
 # Inference needs MLX — installed via the `mlx` extra, which is Apple-Silicon-only,
@@ -25,6 +40,11 @@ mlx = [
 
 [project.scripts]
 datamorph = "datamorph.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/LoveMig6334/data-morph"
+Repository = "https://github.com/LoveMig6334/data-morph"
+"Model (Hugging Face)" = "https://huggingface.co/Bunnana/data-morph-gemma-2b"
 
 [dependency-groups]
 # Local development installs MLX too (the notebooks + pipeline eval need it),
@@ -45,6 +65,18 @@ dev = [
 # Dist name is "data-morph"; the import package is "datamorph" (no underscore),
 # so name it explicitly rather than relying on the default name inference.
 packages = ["datamorph"]
+
+[tool.hatch.build.targets.sdist]
+# Keep the sdist lean: ship the package, tests, and packaging files only. The
+# data/, notebook/, results/, scripts/, models/, and docs/ trees are repo-only
+# reproduction material (available on GitHub), not part of the installable lib.
+include = [
+    "/datamorph",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
 
 [tool.pytest.ini_options]
 markers = [
