@@ -1,3 +1,5 @@
+<div align="center">
+
 # data morph
 
 **Convert messy CSV / JSON / TXT files with a 2 GB language model that runs locally — for free.**
@@ -13,6 +15,8 @@
 🚀 **[Quickstart](https://lovemig6334.github.io/data-morph/quickstart/)** ·
 ✨ **[Showcase](https://lovemig6334.github.io/data-morph/showcase/)** ·
 📦 **[PyPI](https://pypi.org/project/data-morph-gemma/)**
+
+</div>
 
 ---
 
@@ -85,11 +89,15 @@ Conversion is a **five-stage pipeline**, not a single model call. The model neve
 full source file — only a small **metadata envelope** (schema, samples, warnings). From
 that it writes a Python script, which is run in a sandbox and validated.
 
-![Pipeline architecture](progress_charts/01_pipeline_architecture.png)
-
-```
-[file] → 1. extract envelope → 2. (summary) → 3. model writes a script
-       → 4. sandbox runs it → 5. validate (format · schema · load · content) → [output]
+```mermaid
+flowchart TD
+    file([Source file]) --> extract["1 · Metadata extractor<br/>schema · samples · warnings"]
+    extract --> summary["2 · Context summarizer<br/>short NL summary"]
+    summary --> gen["3 · Script generator<br/>Opus (train) → Gemma (inference)"]
+    gen --> sandbox["4 · Sandbox executor<br/>runs the generated script"]
+    sandbox --> validate{"5 · Validator<br/>format · schema · load · content"}
+    validate -->|pass| out([Converted output])
+    validate -->|fail · retry ≤ 3| gen
 ```
 
 Narrowing the task from "transform a whole file" to "read metadata, write a script" is what
