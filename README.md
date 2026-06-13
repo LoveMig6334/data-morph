@@ -73,25 +73,49 @@ intermediate artefact.
   target on every metric. Each cut is lossless-by-construction (strip/prune, guarded by
   a tokenizer round-trip verification gate) or a small retry-recoverable numerical cost.
 
-**Next (W7 deployment):** push the 2.0 GB model to Hugging Face Hub with a model card,
-ship the `pip`-installable pipeline wrapper. See `docs/progression.md` for the live tracker.
+**W7 deployment — done.** The model ships on the [Hugging Face Hub](https://huggingface.co/Bunnana/data-morph-gemma-2b)
+with a model card, and the pipeline is published as the `pip install data-morph-gemma` package — a public
+`datamorph.convert_file` API plus a `datamorph` CLI, with the 2.0 GB model auto-downloading from the Hub on
+first use. See `docs/progression.md` for the live tracker.
 
 ## Supported formats
 
 CSV, JSON, TXT — in 5 use cases (CSV→JSON nested, JSON→CSV flattening, TXT log→CSV, CSV→TXT report, schema migration).
 
-## Setup
+## Install & use
+
+```bash
+pip install "data-morph-gemma[mlx]"   # Apple Silicon; the 2.0 GB model auto-downloads on first use
+```
+
+```python
+from datamorph import convert_file
+
+result = convert_file("contacts.csv", "contacts.json")
+print(result.accepted, result.scores, result.output_path)
+```
+
+…or from the command line:
+
+```bash
+datamorph convert contacts.csv contacts.json
+```
+
+- **PyPI:** <https://pypi.org/project/data-morph-gemma/> · **Model:** <https://huggingface.co/Bunnana/data-morph-gemma-2b>
+- Import name is `datamorph`; the distribution is `data-morph-gemma` (PyPI blocks `data-morph` as too similar to an existing project).
+
+## Development setup (from source)
 
 Requires **Python 3.12** (chosen for stronger MLX support). Project is
 managed by [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync                        # creates .venv from pyproject.toml + uv.lock
+uv sync                        # creates .venv + installs the datamorph package (editable) + dev deps
 source .venv/bin/activate      # macOS / Linux
 # .venv\Scripts\activate       # Windows
 ```
 
-Add a new dependency: `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only).
+Add a new dependency: `uv add <pkg>` (or `uv add --dev <pkg>` for dev-only). Run the tests with `uv run pytest`.
 
 ## Hardware / framework
 
@@ -106,16 +130,19 @@ data/
   interim/      # verified teacher pairs (envelope + analysis + script + scores)
   processed/    # train/val/test chat JSONL for fine-tuning
   test_set/     # 15 hand-crafted W2 baseline cases
-notebook/       # EDA (w4_eda), fine-tune scaffold (w5_finetune), experiments
-src/
+notebook/       # EDA (w4_eda), fine-tune scaffold (w5_finetune), extractor_tour
+datamorph/      # the installable package (import name: datamorph; dist: data-morph-gemma)
+  convert.py    # public API — convert_file() + ConversionResult
+  cli.py        # `datamorph convert in.csv out.json`
+  model.py      # resolve_model() — local path / $GEMMA_MLX_MODEL / HF Hub auto-download
   extractor/    # Stage 1: deterministic metadata extractor — CSV, JSON, TXT (done)
-  evaluation/   # Stage 5: the 4 W2 metrics + Opus-baseline runner (DO NOT EDIT)
+  evaluation/   # Stage 5: the 4 metrics + Opus-baseline runner (DO NOT EDIT)
   data/         # generators (oracle), sandbox (Stage 4), teacher_script + collect (Stage 3)
   features/     # format_pairs: verified pairs → chat JSONL + disjoint split
-  models/       # LoRA/QLoRA fine-tune + inference (W5)
-scripts/        # generate_corpus, collect_pairs, collect_all_parallel, build_dataset, baseline, plotting
+  models/       # MLX inference (gemma_mlx, gemma_script_teacher) + OpenRouter client
+scripts/        # generate_corpus, collect_pairs, collect_all_parallel, build_dataset, baseline, plotting; W7 surgery
 skills/         # Agent-Skill prompts read by `claude -p` (file conversion + script generation)
-tests/          # unit tests (metrics, extractor, data, features) + fixtures
+tests/          # unit tests (datamorph package incl. convert/CLI) + fixtures
 models/         # Gemma-4 E2B (local, gitignored) + fine-tuned checkpoints
 results/        # baseline run artefacts (per-run summary.json + plots)
 docs/           # specs, plans, weekly reports (gitignored)
@@ -138,8 +165,8 @@ docs/           # specs, plans, weekly reports (gitignored)
 ## Deliverables
 
 - GitHub repo (this one)
-- Hugging Face Hub model + model card
-- `pip install`-able Python package
+- Hugging Face Hub model + model card — ✅ [`Bunnana/data-morph-gemma-2b`](https://huggingface.co/Bunnana/data-morph-gemma-2b)
+- `pip install`-able Python package — ✅ [`data-morph-gemma`](https://pypi.org/project/data-morph-gemma/)
 - Medium blog post
 - Presentation slides + A1 poster
 - Facebook post (100–200 words)
