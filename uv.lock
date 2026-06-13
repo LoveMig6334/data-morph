@@ -528,34 +528,43 @@ name = "data-morph"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "jupyter" },
-    { name = "matplotlib" },
+    { name = "pandas" },
+]
+
+[package.optional-dependencies]
+mlx = [
     { name = "mlx-lm" },
     { name = "mlx-vlm" },
-    { name = "pandas" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "faker" },
     { name = "hf-transfer" },
+    { name = "jupyter" },
+    { name = "matplotlib" },
+    { name = "mlx-lm" },
+    { name = "mlx-vlm" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "matplotlib", specifier = ">=3.10.9" },
-    { name = "mlx-lm", specifier = ">=0.31.3" },
-    { name = "mlx-vlm", specifier = ">=0.5.0" },
+    { name = "mlx-lm", marker = "extra == 'mlx'", specifier = ">=0.31.3" },
+    { name = "mlx-vlm", marker = "extra == 'mlx'", specifier = ">=0.5.0" },
     { name = "pandas", specifier = ">=3.0.2" },
 ]
+provides-extras = ["mlx"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "faker", specifier = ">=40.19.1" },
     { name = "hf-transfer", specifier = ">=0.1.9" },
+    { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "matplotlib", specifier = ">=3.10.9" },
+    { name = "mlx-lm", specifier = ">=0.31.3" },
+    { name = "mlx-vlm", specifier = ">=0.5.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "ruff", specifier = ">=0.15.12" },
 ]
