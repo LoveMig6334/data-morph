@@ -524,7 +524,7 @@ wheels = [
 ]
 
 [[package]]
-name = "data-morph"
+name = "data-morph-gemma"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

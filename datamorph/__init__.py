@@ -12,7 +12,7 @@ from importlib.metadata import PackageNotFoundError, version
 from datamorph.convert import ConversionResult, convert_file
 
 try:
-    __version__ = version("data-morph")
+    __version__ = version("data-morph-gemma")
 except PackageNotFoundError:  # not installed (e.g. running from a source tree)
     __version__ = "0.0.0+unknown"
 

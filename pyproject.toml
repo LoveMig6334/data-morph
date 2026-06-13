@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "data-morph"
+name = "data-morph-gemma"
 version = "0.1.0"
 description = "Distill a CSV/JSON/TXT file-conversion capability from Claude Opus into a fine-tuned Gemma 2B (LoRA/QLoRA)."
 readme = "README.md"
@@ -49,7 +49,7 @@ Repository = "https://github.com/LoveMig6334/data-morph"
 [dependency-groups]
 # Local development installs MLX too (the notebooks + pipeline eval need it),
 # so the inference deps are listed here as well as in the optional `mlx` extra
-# that downstream users install via `pip install "data-morph[mlx]"`.
+# that downstream users install via `pip install "data-morph-gemma[mlx]"`.
 dev = [
     "faker>=40.19.1",
     "hf-transfer>=0.1.9",
@@ -62,7 +62,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-# Dist name is "data-morph"; the import package is "datamorph" (no underscore),
+# Dist name is "data-morph-gemma"; the import package is "datamorph" (no underscore),
 # so name it explicitly rather than relying on the default name inference.
 packages = ["datamorph"]
 
