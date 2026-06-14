@@ -1,0 +1,46 @@
+{
+  "id": "gen-1781438767-hSzaTg1xzmJg3nUpDjiY",
+  "object": "chat.completion",
+  "created": 1781438767,
+  "model": "deepseek/deepseek-v4-pro-20260423",
+  "provider": "DigitalOcean",
+  "system_fingerprint": null,
+  "service_tier": null,
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "Here is a Python script that reads the JSON input, flattens nested dictionaries using dot-notation keys, and writes the result as a CSV file.\n\n```python\nimport csv\nimport json\nimport sys\n\ndef flatten_dict(d, parent_key='', sep='.'):\n    \"\"\"\n    Recursively flattens a nested dictionary, joining keys with the given separator.\n    Handles nested dicts, lists, and scalar values.\n    \"\"\"\n    items = []\n    if isinstance(d, dict):\n        for k, v in d.items():\n            new_key = f\"{parent_key}{sep}{k}\" if parent_key else k\n            if isinstance(v, dict):\n                # Recurse into sub-dict\n                items.extend(flatten_dict(v, new_key, sep=sep).items())\n            elif isinstance(v, list):\n                # For lists, we could either index them or join them.\n                # Here we join as a JSON-encoded string to preserve structure.\n                items.append((new_key, json.dumps(v) if v else ''))\n            else:\n                items.append((new_key, v))\n    else:\n        # If the top-level item is not a dict, just store it under the parent key\n        items.append((parent_key, d))\n    return dict(items)\n\ndef main():\n    if len(sys.argv) != 3:\n        print(\"Usage: python script.py <input.json> <output.csv>\")\n        sys.exit(1)\n\n    input_path = sys.argv[1]\n    output_path = sys.argv[2]\n\n    try:\n        with open(input_path, 'r', encoding='utf-8') as f:\n            data = json.load(f)\n    except (json.JSONDecodeError, FileNotFoundError) as e:\n        print(f\"Error reading JSON file: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    # Expect a list of objects at the top level\n    if not isinstance(data, list):\n        data = [data]  # wrap a single object\n\n    # Flatten each record and collect all field names across all records\n    flattened_records = [flatten_dict(record) for record in data]\n\n    # Determine the union of all keys to produce a consistent CSV header\n    all_keys = []\n    seen_keys = set()\n    for record in flattened_records:\n        for key in record:\n            if key not in seen_keys:\n                all_keys.append(key)\n                seen_keys.add(key)\n\n    try:\n        with open(output_path, 'w', newline='', encoding='utf-8') as outfile:\n            writer = csv.DictWriter(outfile, fieldnames=all_keys, \n                                    extrasaction='ignore', \n                                    quoting=csv.QUOTE_MINIMAL)\n            writer.writeheader()\n            for record in flattened_records:\n                # Replace any remaining non-scalar values with their JSON string representation\n                safe_record = {}\n                for k, v in record.items():\n                    if isinstance(v, (dict, list)):\n                        safe_record[k] = json.dumps(v)\n                    else:\n                        safe_record[k] = v\n                writer.writerow(safe_record)\n    except IOError as e:\n        print(f\"Error writing CSV file: {e}\", file=sys.stderr)\n        sys.exit(1)\n\nif __name__ == \"__main__\":\n    main()\n```",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 483,
+    "completion_tokens": 702,
+    "total_tokens": 1185,
+    "cost": 0.002790873,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.002790873,
+      "upstream_inference_prompt_cost": 0.000714357,
+      "upstream_inference_completions_cost": 0.002076516
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

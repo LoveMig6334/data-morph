@@ -1,0 +1,5 @@
+[
+  {"name": "Alice", "address": {"city": "NYC", "zip": "10001"}},
+  {"name": "Bob", "address": {"city": "LA", "zip": "90001"}},
+  {"name": "Carol", "address": {"city": "Chicago", "zip": "60601"}}
+]

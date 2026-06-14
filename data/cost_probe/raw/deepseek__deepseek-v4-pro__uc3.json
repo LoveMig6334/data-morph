@@ -1,0 +1,46 @@
+{
+  "id": "gen-1781438853-sZ8u87XfqTu7MQ1PhBuN",
+  "object": "chat.completion",
+  "created": 1781438853,
+  "model": "deepseek/deepseek-v4-pro-20260423",
+  "provider": "DeepInfra",
+  "system_fingerprint": null,
+  "service_tier": null,
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "```python\nimport sys\nimport csv\nimport re\n\ndef parse_log_line(line: str) -> dict[str, str] | None:\n    \"\"\"\n    Parse a single bracketed-timestamp log line.\n    \n    Expected format:\n        [YYYY-MM-DD HH:MM:SS] LEVEL source: message\n    \n    Returns a dict with keys timestamp, level, source, message, or None if the line is malformed.\n    \"\"\"\n    # This regex captures:\n    #   1) timestamp inside brackets (with time as HH:MM:SS)\n    #   2) level (uppercase word)\n    #   3) source (word before colon)\n    #   4) message (everything after the colon and optional space)\n    pattern = re.compile(\n        r'^\\s*\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2})\\]\\s+'   # timestamp\n        r'(INFO|WARN(?:ING)?|ERROR|DEBUG|TRACE|FATAL|CRITICAL)\\s+' # level\n        r'(\\S+):\\s*'                                              # source + colon\n        r'(.*)$',                                                 # message\n        re.IGNORECASE\n    )\n    match = pattern.match(line)\n    if not match:\n        return None\n\n    timestamp, level, source, message = match.groups()\n    \n    # Normalise timestamp to ISO-8601: replace space with 'T' (no timezone info in source, keep naive)\n    timestamp_iso = timestamp.replace(\" \", \"T\")\n    \n    # Normalise level to uppercase\n    level = level.upper()\n    # Coerce WARNING -> WARN for consistency (if preferred). We'll keep as-is to match log level convention,\n    # but the regex already captures WARNING as a variant; standardise to WARN if exact match desired.\n    if level == \"WARNING\":\n        level = \"WARN\"\n    \n    # Strip surrounding whitespace from message, but keep internal spacing.\n    message = message.strip()\n    \n    # If source is missing (unlikely due to regex), provide a default.\n    if not source:\n        source = \"unknown\"\n    \n    return {\n        \"timestamp\": timestamp_iso,\n        \"level\": level,\n        \"source\": source,\n        \"message\": message\n    }\n\n\ndef main():\n    if len(sys.argv) != 3:\n        print(\"Usage: python script.py <input.txt> <output.csv>\", file=sys.stderr)\n        sys.exit(1)\n\n    input_path = sys.argv[1]\n    output_path = sys.argv[2]\n\n    rows = []\n    with open(input_path, \"r\", encoding=\"utf-8\") as f:\n        for raw_line in f:\n            line = raw_line.rstrip(\"\\n\\r\")\n            # Skip completely empty lines\n            if not line.strip():\n                continue\n            \n            parsed = parse_log_line(line)\n            if parsed is None:\n                # Realistic edge case: malformed line \u2014 we still output it but mark fields\n                # as empty with the original line in message.\n                rows.append({\n                    \"timestamp\": \"\",\n                    \"level\": \"\",\n                    \"source\": \"\",\n                    \"message\": line.strip()\n                })\n            else:\n                rows.append(parsed)\n\n    fieldnames = [\"timestamp\", \"level\", \"source\", \"message\"]\n    \n    with open(output_path, \"w\", newline=\"\", encoding=\"utf-8\") as f:\n        writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_MINIMAL)\n        writer.writeheader()\n        writer.writerows(rows)\n\n    print(f\"Converted {len(rows)} rows to {output_path}\")\n\n\nif __name__ == \"__main__\":\n    main()\n```",
+        "refusal": null,
+        "reasoning": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 619,
+    "completion_tokens": 805,
+    "total_tokens": 1424,
+    "cost": 0.0028977,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0028977,
+      "upstream_inference_prompt_cost": 0.0008047,
+      "upstream_inference_completions_cost": 0.002093
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

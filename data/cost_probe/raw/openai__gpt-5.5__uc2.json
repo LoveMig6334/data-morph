@@ -1,0 +1,55 @@
+{
+  "id": "gen-1781438746-ZnUvH5gqMorbSRHdP32q",
+  "object": "chat.completion",
+  "created": 1781438746,
+  "model": "openai/gpt-5.5-20260423",
+  "provider": "OpenAI",
+  "system_fingerprint": null,
+  "service_tier": "default",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "completed",
+      "message": {
+        "role": "assistant",
+        "content": "The script below reads a JSON file, supports a top-level list of records, a single object, or simple JSON Lines fallback, flattens nested dictionaries using dot notation such as `address.city`, and writes a well-formed CSV. It preserves header order by first appearance, leaves missing/null values blank, and serializes lists or other complex values as JSON strings so they remain valid CSV cell contents.\n\n```python\n#!/usr/bin/env python3\n\nimport sys\nimport json\nimport csv\nfrom collections.abc import Mapping\n\n\ndef load_json_records(path):\n    \"\"\"\n    Load records from a JSON file.\n\n    Supports:\n    - A top-level JSON array of objects\n    - A single top-level JSON object\n    - A JSON object containing a list value, e.g. {\"users\": [...]}\n    - Fallback JSON Lines parsing, skipping malformed blank/bad lines\n    \"\"\"\n    with open(path, \"r\", encoding=\"utf-8-sig\") as f:\n        text = f.read()\n\n    if not text.strip():\n        return []\n\n    try:\n        data = json.loads(text)\n    except json.JSONDecodeError:\n        records = []\n        bad_lines = 0\n\n        for line_no, line in enumerate(text.splitlines(), start=1):\n            line = line.strip()\n            if not line:\n                continue\n\n            try:\n                records.append(json.loads(line))\n            except json.JSONDecodeError:\n                bad_lines += 1\n                print(\n                    f\"Warning: skipping malformed JSON line {line_no}\",\n                    file=sys.stderr,\n                )\n\n        if not records and bad_lines:\n            raise ValueError(\"Input is not valid JSON and no valid JSON Lines were found\")\n\n        return records\n\n    if isinstance(data, list):\n        return data\n\n    if isinstance(data, dict):\n        # If the object wraps a list of records, use the first list value found.\n        for value in data.values():\n            if isinstance(value, list):\n                return value\n\n        # Otherwise treat the object itself as one record.\n        return [data]\n\n    # Scalar top-level JSON value.\n    return [{\"value\": data}]\n\n\ndef stringify_value(value):\n    \"\"\"\n    Convert Python/JSON values to CSV-safe scalar values.\n\n    csv.writer handles quoting/escaping. This function only decides the textual\n    representation of non-string values.\n    \"\"\"\n    if value is None:\n        return \"\"\n\n    if isinstance(value, bool):\n        return \"true\" if value else \"false\"\n\n    if isinstance(value, (int, float)):\n        return str(value)\n\n    if isinstance(value, str):\n        return value\n\n    # Lists or unexpected nested structures are preserved as compact JSON.\n    return json.dumps(value, ensure_ascii=False, separators=(\",\", \":\"))\n\n\ndef flatten_record(obj, prefix=\"\", out=None):\n    \"\"\"\n    Flatten nested dictionaries using dot notation.\n\n    Example:\n      {\"name\": \"Alice\", \"address\": {\"city\": \"NYC\"}}\n    becomes:\n      {\"name\": \"Alice\", \"address.city\": \"NYC\"}\n\n    Lists are kept as JSON strings rather than expanded, since expanding arrays\n    can create ambiguous CSV shapes.\n    \"\"\"\n    if out is None:\n        out = {}\n\n    if isinstance(obj, Mapping):\n        if not obj and prefix:\n            out[prefix] = \"\"\n\n        for key, value in obj.items():\n            key = str(key)\n            full_key = f\"{prefix}.{key}\" if prefix else key\n\n            if isinstance(value, Mapping):\n                flatten_record(value, full_key, out)\n            else:\n                out[full_key] = stringify_value(value)\n    else:\n        out[prefix or \"value\"] = stringify_value(obj)\n\n    return out\n\n\ndef write_csv(records, output_path):\n    flattened_rows = []\n    headers = []\n    seen_headers = set()\n\n    for record in records:\n        flat = flatten_record(record)\n        flattened_rows.append(flat)\n\n        for key in flat.keys():\n            if key not in seen_headers:\n                seen_headers.add(key)\n                headers.append(key)\n\n    with open(output_path, \"w\", encoding=\"utf-8\", newline=\"\") as f:\n        writer = csv.DictWriter(\n            f,\n            fieldnames=headers,\n            extrasaction=\"ignore\",\n            lineterminator=\"\\n\",\n        )\n\n        if headers:\n            writer.writeheader()\n            for row in flattened_rows:\n                writer.writerow({header: row.get(header, \"\") for header in headers})\n\n\ndef main():\n    if len(sys.argv) != 3:\n        print(\n            f\"Usage: {sys.argv[0]} SOURCE_JSON_PATH OUTPUT_CSV_PATH\",\n            file=sys.stderr,\n        )\n        sys.exit(2)\n\n    source_path = sys.argv[1]\n    output_path = sys.argv[2]\n\n    try:\n        records = load_json_records(source_path)\n        write_csv(records, output_path)\n    except Exception as exc:\n        print(f\"Error: {exc}\", file=sys.stderr)\n        sys.exit(1)\n\n\nif __name__ == \"__main__\":\n    main()\n```",
+        "refusal": null,
+        "reasoning": null,
+        "reasoning_details": [
+          {
+            "type": "reasoning.encrypted",
+            "data": "gAAAAABqLpkkQJXU4dpbN7oyu3WDZyzxiW0ejZFoj2MUSDB_F9qVGlbUEMmeMWi3XsqOgaObf34RLHHMqOo7nRqLRe417JDSptOeZZxHSM5ryUIw0uRtXDCOpFIbGbXYQQ8-COBJjPqcmj7QZA-nsEaBxLKyrfiy57OzQFg1fdtuBLNw6_nlsFg0Z2mVaip2vsjJQNa6dmKYFjwofmRrxTJjrP0TYFc0MTCtdWIbv4alfNqOtwUc_4wAFaP7Y0pXNHJ96t2MRHme8Sa-xjPjleFLFKOq6ZegezRoEGZ_9XzsMxYIED2GETI1hQtCquCni1dgbvQ5Jqv9eFUz3hFcbwOzfALMazHb4JX5rWsRWpO9oeEBOAeNG1j7tEG7OuEs9uMTL1anvonNo9kEHCiMuGLXZLvtDXn5ERN9hCSQy0d7fWFz28H9dnDzgjEt6_rMyXAj9xPEf9xTtQ1QSGiSzSpGbIkKbv4RgQvVUgA6Ro2sSRJIxOp09xtZ7g8THsR6IpmQcPvJrmbeqeRd7e4W49SPHLEtYswjIPolQMMlvO7-GXzUFEjgGPTJy42QsIuGxHpEwg12-YDsLSQ1yKRNAKvWIf5k0R1gnLSpNinhPnB9pEqS4NKViWKDysDp4h4-_luZsC46HtC13biQb73dG0S26TsGmIoxhcXAfhD7yODfNLK660PQn6PGMSxfsv46KnEqVTJF6HhLkbfe9apgZOVbnoTuDTlKIhmF5fuAnp3gajED7IbP9lHyBj8h-KAbHCDgFFIjySo4xGiVYYUC7rsGJhxPYLTU7oFt8bjvVs-APNGeVx_nfvPU1Xv_l7czlHT5hrsKrvsWAF3BC6zQWdadqn8ltzwJJJJkcyuoCmCpE60wDAS_kmBXYWuYpnJS_-qsrO8zTQ_AJyqNBULFMr9MoAahmCAy-AfC_c7jtTaf6qdzi-q32DgS_MemXGxiWv29EdlHbeU6CYQmcQCFzaKHvQONi333DW_GyZB1ZfmyJLgNrwku6HkXMfBM-xuSYkpUZh9Kek95fO25JSaZ7q_p0gC8ypXXOe-SauDcmH_xluRRWZqzLXCAVDPbJfZKfLEM-wX_SFH9KjuvDoiGbQmD-R-P2goJqEB2FbVXxhed_FYE7B2g4D7up_mbo7yW3Gt4cCDJJk8dTBLN_3VDhXvrreDUzqV4Mmfvsz_W65o3WPjTtbqPHPqxeiR5iEfUyRV3HIyx_jxv0XW5JWlACAapvmyNbAsUVIuVGhnOdjEkw00m4tdp2WPsvEQc4BUmzqQizi6Td20SkFBdo9GyNeJErPtIvjeX14mccHj13Pdq-am2H45xzjnY71wYwC6ONicRynozht8SVfyWSJpPK_tG-ixUCp2GXJCEi6tfRiqFjcyEGlvwpMbUcdq_YRxMR3sr-sCTXwk1s6NZ5cO1Ej07c6q2B-bIM_DOuXPU7PB4ig_nQD4wSJzVXBI067M1__PAVwfMBxWmn5qilBEc23Pcf7ouRMSjvdohcUxZTQxYKBbdt8PaNbdPReNXLKbrccPZ_t0P1_kwhbF0yLSJZcBuZfg8GAEAdsejeRuEM5EwyCHOPTECYlPRXKWB4WOVT7ISM7PU4boSu3GGiwMYGKRaLGj8Ra0OJmN7eNlneatNgdHK0mUpXIkKbDus2i7vEnb8QRaVYy7rAsdidZIMOl-HglwPtQeKjPZTyvJ7YGgYH07hp8Nymx9S6J30dj0KXNujTzLTYi3IdpIin7qNGYRXeP570jqPz2qchvZ6MElH4Ezums9QKKyQAFBVVxhm400c9zHe18clF43L7e5pD7zs7KtzujemmKcdLg5KMQ3hjrJTihTnFGZEX6Y9wWYZVta4vjUcdWZ0KySsa_yq1yOSkaM_meY0WGkz0oBQL_DNS0-wF41SlK64pXY5fYBGc6qigjznxdYNa99drQpvEW9fGaMSrvkRDf9eVJifwH4b0_6SntcsKTV2zVj22sABhyxEizITE3I7XAoiebtfpaP_5GyS5mYIqsw0bRqBMwVfQ36Ob7K7I9ZgphOT9NfbYyMXATxKFzjYta2O3xa691wH80GDpj__Di-2R88zCgx5Bo54a_eo4zsK4FK0up-nU-H2sEZfqvPcHmQj00hH6tz7JluzuNxMANcC4DQqjSSBQpF776wd4vbFSiFLZ014AOnqZxUXkDza_AIt_t5dXCTogMJyGXplnw7Yofr-Bp4wjAs8-mEIS-mxvEb48n6FO6S-iaYTRCrTnE2QaLLmlJh9Y6o9rmWhExG_DTpAURyvjo0KiD2RVjSrRatK2J03JChv4d57Lox_IjZ9ek1kzvdrwBvT0hmxBIMzh4RjnmGyjoDp4_TF1-AeAHnV5YEtsixcS76zGKJ3QAkzm50UO6Gi0ZCgY4RagAislGyquCnYOVBnaZZAnE2RgcTbYeWZmRMwJHONQZjZOo7QzzRpR4-e8iZh10Nskw6u7lTs_OyKMf9dQM-4DWESMbJgtsd8d5jXPnikL3PRrzZcxc2t0t6qHm21lVC2U4bMGtM0VATT9gBKnZI9Y5rFQn1aoOm8UNYVfPHyq15Np-5lbSDx7arGm7rGzbHDZkytN-YI9d46rPon4_m9najmRy6jzxcPaT-6Tezn1uJF8DXF89qZpLnSP3WmxLe8qrNPK-VMs6vEWXz1onzD2BkXKyCdFee6HEBDQTNMuBTv3O3qwgQq7u8W4Uj1xLZc4dN1LRBuZuOKZVZMZJM0AuEFOJraOw5R4QuigxS65e4x1ScJuKliue83xSP0Hd7l7AurDbc3gKM5ihOhY3Q7A2R2IwCw_3mPX40D8oVkjnaEQfPGDVPDt7YjJBfJJn1iU_w0irp3glMjEX-_BhX7wqgUDDuR0TlvFYyPxZb5Tz-P8yHNdjavYMebTQsHjIWYJZdjFO2hR4PM8zgXnDnQecqxwEiehDmDEvuLhV65ZqvlKI9uVWOXpfnONTI1-e0q4DAjO0IzweY0JaSSZdto9D08_V7u4t9oe9Ppa6YIzaOqYTSar6hRT8RCXophRwSut5T84FCbakXbzs4wLnu6cG9rTeQIdaULyxCE4CyvaswueCdDKF-PRooDe4ukIF4Jq_de-hnzBhmlu2uiebB5l9MeQvadWSGpYyiF6-tKxcrOHJvl5uVJ95lHoauofPS9vbt7yE783TMV7odtSAswnnxn0Fe92LvoqE2OVTtJAGEmqyf82LjsLVZbBJNSY342xmiuDOVFwWmUrSvxtSOBeCb61U5cGnoTTR3Nq-gQi7ubDHxmxOyftANNoNm9kW622lwEB-3vlA0AjPFkQAb83wPFWm4FFE1ntPO6nh7eD_AtAcLvVOlhOG6mCzpPqO4X3U8n5xz1lz9Kubpr3VWcBIYM8Fj0yACaaEvgo3pw6vMi",
+            "format": "openai-responses-v1",
+            "id": "rs_01637ac25232dc5a016a2e991ca0e4819682e16755331ac782",
+            "index": 0
+          }
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 478,
+    "completion_tokens": 1430,
+    "total_tokens": 1908,
+    "cost": 0.04529,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.04529,
+      "upstream_inference_prompt_cost": 0.00239,
+      "upstream_inference_completions_cost": 0.0429
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 394,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

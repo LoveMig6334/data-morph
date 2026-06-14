@@ -1,0 +1,61 @@
+{
+  "id": "gen-1781439042-vXEXBdLD9eSe8fwaD4Yh",
+  "object": "chat.completion",
+  "created": 1781439042,
+  "model": "openai/gpt-5.5-20260423",
+  "provider": "OpenAI",
+  "system_fingerprint": null,
+  "service_tier": "default",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "completed",
+      "message": {
+        "role": "assistant",
+        "content": "Reasoning: The conversion is a JSON-to-JSON schema migration. The script should parse the input, recursively walk dictionaries/lists, rename `user_name`, `user_email`, and `user_age` to their new names, and write valid JSON. It also includes modest robustness for JSON Lines-style input and simple type coercion for `age`.\n\n```python\n#!/usr/bin/env python3\n\nimport json\nimport sys\nfrom typing import Any\n\n\nFIELD_RENAMES = {\n    \"user_name\": \"name\",\n    \"user_email\": \"email\",\n    \"user_age\": \"age\",\n}\n\n\ndef coerce_value(key: str, value: Any) -> Any:\n    \"\"\"\n    Apply small, safe type normalizations for migrated fields.\n\n    - age: convert numeric strings to int where possible.\n    - empty strings for migrated fields become None.\n    - name/email remain strings if already strings; otherwise they are preserved.\n    \"\"\"\n    if value == \"\":\n        return None\n\n    if key == \"age\":\n        if value is None:\n            return None\n        if isinstance(value, bool):\n            # Avoid treating True/False as 1/0.\n            return value\n        if isinstance(value, int):\n            return value\n        if isinstance(value, float):\n            # Preserve non-integral floats, but convert 30.0 -> 30.\n            return int(value) if value.is_integer() else value\n        if isinstance(value, str):\n            stripped = value.strip()\n            if stripped == \"\":\n                return None\n            try:\n                return int(stripped)\n            except ValueError:\n                try:\n                    number = float(stripped)\n                    return int(number) if number.is_integer() else number\n                except ValueError:\n                    return value\n\n    return value\n\n\ndef migrate(obj: Any) -> Any:\n    \"\"\"\n    Recursively migrate dictionaries/lists by renaming legacy user_* fields.\n\n    Collision policy:\n    If both a legacy key and its new key are present in the same object, the\n    existing new key is treated as canonical and is not overwritten by the\n    legacy key. The legacy key is omitted from the output to complete the schema\n    migration.\n    \"\"\"\n    if isinstance(obj, list):\n        return [migrate(item) for item in obj]\n\n    if isinstance(obj, dict):\n        migrated = {}\n\n        for original_key, original_value in obj.items():\n            new_key = FIELD_RENAMES.get(original_key, original_key)\n            new_value = migrate(original_value)\n            new_value = coerce_value(new_key, new_value)\n\n            if new_key in migrated and original_key in FIELD_RENAMES:\n                # Existing canonical key wins over legacy duplicate.\n                continue\n\n            migrated[new_key] = new_value\n\n        return migrated\n\n    return obj\n\n\ndef load_json_flexible(path: str) -> Any:\n    \"\"\"\n    Load a normal JSON document. If that fails, make a best-effort attempt to\n    load newline-delimited JSON records.\n\n    This keeps the converter useful for closely related JSON/JSONL inputs while\n    still failing clearly when nothing valid can be parsed.\n    \"\"\"\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        text = f.read()\n\n    try:\n        return json.loads(text)\n    except json.JSONDecodeError as original_error:\n        records = []\n        errors = []\n\n        for line_number, line in enumerate(text.splitlines(), start=1):\n            stripped = line.strip()\n\n            if not stripped or stripped in {\"[\", \"]\"}:\n                continue\n\n            # Useful for files that are visually array-like but have one object\n            # per line with commas.\n            if stripped.endswith(\",\"):\n                stripped = stripped[:-1].rstrip()\n\n            try:\n                records.append(json.loads(stripped))\n            except json.JSONDecodeError as line_error:\n                errors.append((line_number, line_error))\n\n        if records:\n            if errors:\n                print(\n                    f\"Warning: skipped {len(errors)} malformed line(s) while \"\n                    f\"parsing as JSON Lines.\",\n                    file=sys.stderr,\n                )\n            return records\n\n        raise original_error\n\n\ndef main() -> int:\n    if len(sys.argv) != 3:\n        print(\n            f\"Usage: {sys.argv[0]} SOURCE_JSON_PATH OUTPUT_JSON_PATH\",\n            file=sys.stderr,\n        )\n        return 2\n\n    source_path = sys.argv[1]\n    output_path = sys.argv[2]\n\n    try:\n        data = load_json_flexible(source_path)\n        converted = migrate(data)\n\n        with open(output_path, \"w\", encoding=\"utf-8\") as f:\n            json.dump(converted, f, ensure_ascii=False, indent=2)\n            f.write(\"\\n\")\n\n    except Exception as exc:\n        print(f\"Error converting JSON: {exc}\", file=sys.stderr)\n        return 1\n\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n```",
+        "refusal": null,
+        "reasoning": "**Considering JSON parsing strategies**\n\nI think about preserving the original types, except for age \u2014 where type coercion would turn the user_age string into an integer. If there are missing fields, I won\u2019t add them. I should rename keys recursively in nested structures, which might also affect non-user records, but that could be okay with the same schema. I'll also consider including a max value and ensure JSON Unicode is preserved. For malformed lines, my approach involves using `json.load` initially and, if that fails, switching to JSON Lines parsing after stripping trailing commas.",
+        "reasoning_details": [
+          {
+            "type": "reasoning.summary",
+            "summary": "**Considering JSON parsing strategies**\n\nI think about preserving the original types, except for age \u2014 where type coercion would turn the user_age string into an integer. If there are missing fields, I won\u2019t add them. I should rename keys recursively in nested structures, which might also affect non-user records, but that could be okay with the same schema. I'll also consider including a max value and ensure JSON Unicode is preserved. For malformed lines, my approach involves using `json.load` initially and, if that fails, switching to JSON Lines parsing after stripping trailing commas.",
+            "format": "openai-responses-v1",
+            "index": 0
+          },
+          {
+            "type": "reasoning.encrypted",
+            "data": "gAAAAABqLppR_vDpLTAtZbZewDSI-Di7K6MwqWj2NDTeS0_iN6COGiSnzqRAOZXkpOPdn2clGOi6aZwkOsfJW2KQqDrmdi7uMHuC7dMDOcqOXbxhTXIBR-cCoP24Ie8DNPgAYW0bVaw6XHs3OZs0GELQlnPCZN1Wo6HOC29CALoKMLbeJqMmc1F7_2rsk4lwrXBlpeaiMpAqT8UD2MDuEYX4DTDVM6h5I7-4rVrolpB91e_LVx3HSSFiT0zot2bbXbwWPFh5J3bB9mzZ9C6GmbI9YpK0XEuXPIZBBuFSn8k1c0wvR_kzWv3n0BR5Lpy1Heg4AY6jS_2e54QM0-kxE_lXtjAaNdtQzGH0fQOh6s5Bq-y5kZRpWq0r9woHmdPMoIGYYkgdnilshrdhNOkklsO_B1KBBvGh5zBFCq5MHwM8yFL4Q2sx1FWI2xNJvde6Yn0hoISPcyjuG6zSe3G5WD0RpCcS17IAVrDhK2l3T_CuY7q6AtdTfGa-aY9uk9Zr0Qade5KG-WC-rJC5RF_6ONcTFA0TjeAnEyY3tJqkHK8l5oWzerU2ViVFB1iTyYsIv-EIE99ni6pVE77WxYAfwwFMORD-E7RZ6DwCfckZg9DcA4-eC9an4VArmiuBFO7US3bq7Ee8UjAa_uPwli3o3l96NFQCJwH-rpQ1kOqp_BmBa9mgr3vOrlILD_QU2CL8xpGPGjRTpaE8YvXiDOAm8uJIxpqiRmJ4G4HF2wpH0QB6a1vJ-Hh_y6RDpzkOei4s98J_sCmWFgiQuBWAeyqEBPqYsot4_h3WZd_YDN9IbUCmHQmznegAYozbwu8A_nHAOFq-l1bdJ7qtEbf3xynBtjqv98JyaBNj_CxvS7yUA15p6irFoASCvgKvpUzaUVUSudZtwMY2xm9tHuaa-FII6B0t3gXcfMYifpLfHbfySUbgfFT7xD9fdWmLbVsoKPGX1j8Px-Xppcue_s7OwuGKcNd2c4zk_HMFDu5rqksBb9wPqTI3E2mmgzhII2jEaoVwDTolNZdbiRoPxHXmOWjNPhu7CdSpXvWg0l201FLip7x950Kknl2yFqjKS_JB8MZsEjgOirWAh4J2VIZLkxYnNeNMHwu-YWBDAzfNxpYvQNXrmKcPoG2-JPdBxe5SPv8mjfaKAcYhKS6tMxvkITjfQCUqZygiOmWvD0cwUPdWdvubzWo5L22Ofi7cZ5eqoic_yG8Gn6sgmDxVENmFs5DuEl7P0DleAkCYp-nkI88HbNwQCoKT64gdPBlRc5YLkrg4QqSx_fOZamcfTA38h-Z3pL88KL8xahEGOFgNBGHFumb4mITdCo4sYi0qWNxwMSs6mksHMa-ZvpbZuVW0JGpwdmKBPdD4yEb_spkL1E0uFLmBmPRwFApHczf9WPK2lzOThslI_3kNJhXthGed-NTj_6ZRcPVdhshY1AGM-NTCwWSxv11YLVLcbO2pFjM1wJ2nvJPtbNSZ6n-mI96-YRsYvdNQm1D_DulnJ7grecVRU6mklHNR2dF1XbIazo694TT2izVLfTA__B6F8EfIs9YM30e_TqCFOOTITMwmKrKg9z7huzexecG2Vf3MkNHFbyOyecw_1oCrRaCW9sqZn1EDS9JpJs3osQEwsjRZsmTo9nyrIAISxh-dt9yjJ39xoxBGOdci0w3YzW70V4eI5w1AoLTDTo5dRuKTdsGwW2a7LPwG1kRJahwevaVvraeI4lhWLtMhsnS6U3XYl_laYtZy58s36IO6f6CC4W5QeVxr-2XPnydEyOtNrMkjXztzjB7MDPMi21kOB_7R47V6STFq_GqNqLlLP3JCUllqJnlpweYbgLYbDWYxGMzpY0T_-AgDWUFJGxzMRTVWohPWSfsIQufh5vdvCCWqkWzXu5aOBXalhitQp9NKY9HI2jiJhTOoYzfzVT-GgzXbGEvaz4WCg_OP3tLaekTkPdtIeyvyW3S3y_2tfzszKldZu3TDP6CJyq7XF7g7pdrRtbiILreq98bVf1wpn1sgMpmXzt9AWIsbWbP4EJ4bnPw73E892hYfefbgAM2FImCGUrEtafi9WXmTHwG_s92PX38NDRNmUImaF37prZXzF66XiRpDJBt9wBeaEBNArS8CoAIU_Gr2VgLWGQ0JiLtw3DyjBxJIeOA35D_heDuEmUALkEhA2J0OLX6_8FuuT_Q-UaGVp5YccsjMcZZzEqN9qr5Lnod7TEKjvTFAngZ6dzRrLXCvUsWF0w6_NzHA9frqd1yQ3-uJLWogS5fjLEiLC1EtGP8R5I-Q1VdY8D_VcGBB-9JXCvup6LwBfNWMm7yM6A2mBWwv31YbT698yjKM70RQiD2vz8EMcEHhLP4j47be6qTc5ddGpXU5nB0CA_Pu6IcFOygYBBIrShBPD8KoTAAD3itC-pPitYahujT7AYBLDmSi280j4DOe5B0578Z7svpts_m989S43tdW4VKGPHGXaslwvM4cY399u7ormQp5k_HpWxdlK1HkxRPe6pTwJh8dmOPnMjsaCkkVQ3b5n_nCY7OHNLXnTFlBPwCUje_pNRJHqwWm9rWxD23jhd9jMlgMWQPjg6U_2F1uPuafM0twV9ih77MRfa5MPYyVaTotEyynhOVacS71FXfmURkhk2TBruCUmxYD1AbOaQb_zjQW2_XZ0fWpOKNx386tEguWcJ20R5ToVKlmgX5EPTSIuDLLHWDtTaw0hQwO0AkdjhQ9G2PtZqVJfZHJzp8kDq6JP2c8jnDVCZaBQMx-eQo8_V8FwaAqo8hl-agPf3W063v4kgtqlKWfdC0IsWWNhT8Wt6Vl8160tZjF67_ddz9T7NtYMS1mluubIj6SReTj3E0RElXB-4ylIPAetonxlLbnm-te0hsgoa0-Tq0Ge5kFFq8St6rKD-s86-74tO9o3iVeIAHEjfeeGi6IdtFZB4p7hofgZFwYdEhi5H0fzmxiV7WyPMi3XT5YOjeFmoo30HvldoYzsyEIIlBTzAbI_p0siXYf7Awwcv_JLComOBVAGL4DJWFzqrCiJMr-6TP6LpfjXv7viMWhshIc0j8Wqnat2B0NKNd_8FMqsfbDaAZp1scGqy6Gxor7RIBTyfJJAIk5ZEYchB7h-g3yoXANwUwSckhNWyjvENZn1YOg3JdYxAHvwBDpVvGdjBqpuAPYNRDGghJL3JAEhh_Db2k4xK9TxNPhv2s0xKZSqcVE_xLdVR66MbKHNN9-kAwaIZeX8PeTJzRWKJgtgUHmo5OD67EMGnFb0ybGd5PHZHOoWKUXbtC3c-oCA_MDieW87nTr78cBt_L2PQb_vED4CBk6Kt-X9RU_CgZoRKSrzPdjRd_9591_pVVOA-_W-7rDNSB2wWmFRKlodgKBwHJNnSUZISyc8yoZWauOYkjhfJdIACAz_pEuuEZXS9qWUzo0DGAA1gQ7b-JQz4v0EqkCwXVQQgl693_aGlBcKoz6SWxUDQotoePJqz8VnJ5Gpd5DUwFJEPAt2nkJ3b3qcSCpftU5bnmeN3cWdTVybl3EN6yWHTqqi5_PUNgj8Rq1O6ct5rehf8YK7wNF9omA0eM8_xZaCejG8ymSilfoQtGdIx9jbD9CBWrrBM8DJHqEOSR4enoaujH699VqDz1n5jbPozIRrrLVQbRH2KmxMkiCaEyTTBhL43yI4oZjM8l6XcCGNOVXAg6RH-0RreESYAHIWk-ptLlMCosZdBSN3fp_7xWBt-wQPbBai5HqR_Azvpvn-_AOiGqQrvrzrDAR9tWJ5Cs--oLBPo1_GgiwJKo_9EFd_7-eiDduzb4QaRDTEzsM6oZvnJ4wd660fTqlbZoF1rXjpTxOuMOCKznIwGA1lYNx8TTmagTm2N_Cr9dxnNcc9zWq1GnOTWWBCPK6ozROWk89gfn2gTnaGOnce4IYYmm5CHTcacZ2yfPCUOnCOr4UO0SookLWXxHfP9QrYCcExJbE1uZM1iEoVK-BTYLkxXi7ceQoaskV62JKIMVUeAbcz8YRG9oeHiMaCuLagzjjd2FJH2IRG7U8JZV-OqrEalYDYJBAiEis5pn4X9xixa5b9osf6axx2vjoSCeIB06BoUE7I29kR8U2g4c7lCyF2BsXF6FlmO97p7ixm63TBT1Eq4zb54HcLb4EoCoHOnTq7msOe9Us4fkbMu37rksbb1G9VjRZWoj4P0bC1DDWKrj3eOsDCqX98DJYdOxjvrd9fLFuF97X6M9hOkeLX-tUlBW1ZP5VgFMOemzVtv7iATNp-yU1LUIeKOUDaKptetI-7k5DwHu78plKC95-7u5IoDG_6Aw7",
+            "format": "openai-responses-v1",
+            "id": "rs_0c610b5f7462509f016a2e9a437358819083f93e2d10ec9854",
+            "index": 1
+          }
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 497,
+    "completion_tokens": 1541,
+    "total_tokens": 2038,
+    "cost": 0.048715,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.048715,
+      "upstream_inference_prompt_cost": 0.002485,
+      "upstream_inference_completions_cost": 0.04623
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 516,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "uc1": {"file": "uc1.csv",  "src_format": "CSV",  "tgt_format": "JSON", "task": "Flat CSV with user_* and order_* columns -> nested JSON (user object + orders array)."},
+  "uc2": {"file": "uc2.json", "src_format": "JSON", "tgt_format": "CSV",  "task": "List of users with nested address object -> flat CSV using dot notation for nested keys."},
+  "uc3": {"file": "uc3.txt",  "src_format": "TXT",  "tgt_format": "CSV",  "task": "Bracketed-timestamp logs -> CSV with timestamp,level,source,message (ISO-8601 timestamps)."},
+  "uc4": {"file": "uc4.csv",  "src_format": "CSV",  "tgt_format": "TXT",  "task": "Regional sales CSV -> human-readable TXT report with an aligned table and totals."},
+  "uc5": {"file": "uc5.json", "src_format": "JSON", "tgt_format": "JSON", "task": "Schema migration: rename legacy user_* fields (user_name->name, user_email->email, user_age->age)."}
+}
