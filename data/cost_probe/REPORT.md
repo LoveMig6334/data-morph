@@ -2,21 +2,35 @@
 
 **What this measures:** the real OpenRouter cost + latency of having a frontier
 model write a Python *conversion script* for one sample file per use-case
-(UC1–UC5). Costs come from each response's `usage.cost` (OpenRouter's actual
-billed amount, including input, reasoning, and output tokens); where absent they
-are computed from list pricing. Scripts are not executed — this is cost-only.
+(UC1–UC5). Scripts are not executed — this is cost-only.
+
+**Cost source:** the **actual OpenRouter dashboard billing** (`BILLED_TOTAL`) is
+the ground truth below. The per-response `usage.cost` field over-reported the true
+spend by ~1.9x, so it is shown only for reference in the reconciliation table.
 
 Files: 15 successful calls across 3 model(s). Sample inputs are tiny (<600 B each) — treat all figures as a **lower bound**.
 
-## Per-model totals
+## Per-model totals (actual billing)
 
-| Model | Calls | Total cost | Avg cost/file | Total latency | Avg latency | In tok | Out tok | Reason tok |
-|-------|------:|-----------:|--------------:|--------------:|------------:|-------:|--------:|-----------:|
-| Claude Opus 4.8 | 5 | $0.30493 | $0.06098 | 128.4s | 25.7s | 3565 | 11484 | 0 |
-| GPT-5.5 | 5 | $0.39364 | $0.07873 | 209.2s | 41.8s | 2443 | 12714 | 5280 |
-| DeepSeek V4 Pro | 5 | $0.01858 | $0.00372 | 105.8s | 21.2s | 2494 | 5932 | 1604 |
+| Model | Calls | Billed total | Billed/file | Total latency | Avg latency | In tok | Out tok | Reason tok |
+|-------|------:|-------------:|------------:|--------------:|------------:|-------:|--------:|-----------:|
+| Claude Opus 4.8 | 5 | $0.16700 | $0.03340 | 128.4s | 25.7s | 3565 | 11484 | 0 |
+| GPT-5.5 | 5 | $0.20900 | $0.04180 | 209.2s | 41.8s | 2443 | 12714 | 5280 |
+| DeepSeek V4 Pro | 5 | $0.00843 | $0.00169 | 105.8s | 21.2s | 2494 | 5932 | 1604 |
 
-## Per-use-case cost (USD)
+## Billing reconciliation (usage.cost vs dashboard)
+
+| Model | Reported usage.cost | Actual billed | Ratio |
+|-------|--------------------:|--------------:|------:|
+| Claude Opus 4.8 | $0.30493 | $0.16700 | 1.83x |
+| GPT-5.5 | $0.39364 | $0.20900 | 1.88x |
+| DeepSeek V4 Pro | $0.01858 | $0.00843 | 2.20x |
+
+## Per-use-case split (reported usage.cost, relative)
+
+Per-UC dashboard figures aren't available (billing is per-model/day), so this
+shows the *reported* usage.cost split — useful for the relative shape across
+use-cases, not absolute dollars (see reconciliation above).
 
 | UC | Claude Opus 4.8 | GPT-5.5 | DeepSeek V4 Pro |
 |----|------:|------:|------:|
@@ -26,17 +40,18 @@ Files: 15 successful calls across 3 model(s). Sample inputs are tiny (<600 B eac
 | uc4 | $0.07834 | $0.13563 | $0.00400 |
 | uc5 | $0.05983 | $0.04872 | $0.00616 |
 
-## Extrapolation (cost-only, one LLM call per file)
+## Extrapolation (actual billing, one LLM call per file)
 
-Assumes one independent script-generation call per file (the model re-reads
-each file to catch its edge cases). Linear in file count; **input cost grows
-further with real file size**, so production figures would be higher.
+Billed/file = dashboard total / files. Assumes one independent script-generation
+call per file (the model re-reads each file to catch its edge cases). Linear in
+file count; **input cost grows further with real file size**, so production
+figures would be higher.
 
 | Model | Cost / 1,000 files | Cost / 10,000 files |
 |-------|-------------------:|--------------------:|
-| Claude Opus 4.8 | $60.98 | $609.85 |
-| GPT-5.5 | $78.73 | $787.27 |
-| DeepSeek V4 Pro | $3.72 | $37.17 |
+| Claude Opus 4.8 | $33.40 | $334.00 |
+| GPT-5.5 | $41.80 | $418.00 |
+| DeepSeek V4 Pro | $1.69 | $16.86 |
 
 ## Why this supports the data-morph thesis
 

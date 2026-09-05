@@ -39,6 +39,11 @@ MODELS = [
     {"label": "DeepSeek V4 Pro", "slug": "deepseek/deepseek-v4-pro",  "in": 0.000000435,"out": 0.00000087},
 ]
 
+# Actual OpenRouter dashboard billing for the 5-call/model run on 2026-06-14.
+# The API's per-response usage.cost field over-reported the true spend by ~1.9x,
+# so the dashboard totals below are treated as ground truth in the report.
+BILLED_TOTAL = {"Claude Opus 4.8": 0.167, "GPT-5.5": 0.209, "DeepSeek V4 Pro": 0.00843}
+
 
 def load_api_key() -> str:
     env = ROOT / ".env"
@@ -106,7 +111,15 @@ def extract_usage(resp: dict, model: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="don't call the API")
+    ap.add_argument("--report-only", action="store_true",
+                    help="regenerate REPORT.md from results.json without calling the API")
     args = ap.parse_args()
+
+    if args.report_only:
+        records = json.loads((PROBE / "results.json").read_text())
+        write_report(records)
+        print(f"Regenerated {PROBE/'REPORT.md'} from results.json")
+        return
 
     RAW.mkdir(parents=True, exist_ok=True)
     template = SKILL.read_text()
@@ -164,33 +177,51 @@ def write_report(records: list[dict]) -> None:
         "",
         "**What this measures:** the real OpenRouter cost + latency of having a frontier",
         "model write a Python *conversion script* for one sample file per use-case",
-        "(UC1–UC5). Costs come from each response's `usage.cost` (OpenRouter's actual",
-        "billed amount, including input, reasoning, and output tokens); where absent they",
-        "are computed from list pricing. Scripts are not executed — this is cost-only.",
+        "(UC1–UC5). Scripts are not executed — this is cost-only.",
+        "",
+        "**Cost source:** the **actual OpenRouter dashboard billing** (`BILLED_TOTAL`) is",
+        "the ground truth below. The per-response `usage.cost` field over-reported the true",
+        "spend by ~1.9x, so it is shown only for reference in the reconciliation table.",
         "",
         f"Files: {len(ok)} successful calls across {len(by_model)} model(s). "
         f"Sample inputs are tiny (<600 B each) — treat all figures as a **lower bound**.",
         "",
-        "## Per-model totals",
+        "## Per-model totals (actual billing)",
         "",
-        "| Model | Calls | Total cost | Avg cost/file | Total latency | Avg latency | In tok | Out tok | Reason tok |",
-        "|-------|------:|-----------:|--------------:|--------------:|------------:|-------:|--------:|-----------:|",
+        "| Model | Calls | Billed total | Billed/file | Total latency | Avg latency | In tok | Out tok | Reason tok |",
+        "|-------|------:|-------------:|------------:|--------------:|------------:|-------:|--------:|-----------:|",
     ]
     summary = {}
     for model, rows in by_model.items():
         n = len(rows)
-        tcost = sum(r["cost_usd"] for r in rows)
+        billed = BILLED_TOTAL.get(model)
+        per_file = (billed / n) if billed is not None else (sum(r["cost_usd"] for r in rows) / n)
         tlat = sum(r["latency_s"] for r in rows)
         tin = sum(r["prompt_tokens"] for r in rows)
         tout = sum(r["completion_tokens"] for r in rows)
         treason = sum(r["reasoning_tokens"] for r in rows)
-        summary[model] = {"avg_cost": tcost / n, "avg_lat": tlat / n}
+        summary[model] = {"per_file": per_file, "avg_lat": tlat / n}
+        btot = f"${billed:.5f}" if billed is not None else f"${per_file*n:.5f}*"
         lines.append(
-            f"| {model} | {n} | ${tcost:.5f} | ${tcost/n:.5f} | {tlat:.1f}s | "
+            f"| {model} | {n} | {btot} | ${per_file:.5f} | {tlat:.1f}s | "
             f"{tlat/n:.1f}s | {tin} | {tout} | {treason} |"
         )
 
-    lines += ["", "## Per-use-case cost (USD)", "",
+    # reconciliation: API-reported usage.cost vs actual billing
+    lines += ["", "## Billing reconciliation (usage.cost vs dashboard)", "",
+              "| Model | Reported usage.cost | Actual billed | Ratio |",
+              "|-------|--------------------:|--------------:|------:|"]
+    for model, rows in by_model.items():
+        reported = sum(r["cost_usd"] for r in rows)
+        billed = BILLED_TOTAL.get(model)
+        ratio = f"{reported/billed:.2f}x" if billed else "—"
+        bcell = f"${billed:.5f}" if billed is not None else "—"
+        lines.append(f"| {model} | ${reported:.5f} | {bcell} | {ratio} |")
+
+    lines += ["", "## Per-use-case split (reported usage.cost, relative)", "",
+              "Per-UC dashboard figures aren't available (billing is per-model/day), so this",
+              "shows the *reported* usage.cost split — useful for the relative shape across",
+              "use-cases, not absolute dollars (see reconciliation above).", "",
               "| UC | " + " | ".join(by_model.keys()) + " |",
               "|----|" + "|".join(["------:"] * len(by_model)) + "|"]
     ucs = sorted({r["uc"] for r in ok})
@@ -201,14 +232,15 @@ def write_report(records: list[dict]) -> None:
             cells.append(f"${match['cost_usd']:.5f}" if match else "—")
         lines.append(f"| {uc} | " + " | ".join(cells) + " |")
 
-    lines += ["", "## Extrapolation (cost-only, one LLM call per file)", "",
-              "Assumes one independent script-generation call per file (the model re-reads",
-              "each file to catch its edge cases). Linear in file count; **input cost grows",
-              "further with real file size**, so production figures would be higher.", "",
+    lines += ["", "## Extrapolation (actual billing, one LLM call per file)", "",
+              "Billed/file = dashboard total / files. Assumes one independent script-generation",
+              "call per file (the model re-reads each file to catch its edge cases). Linear in",
+              "file count; **input cost grows further with real file size**, so production",
+              "figures would be higher.", "",
               "| Model | Cost / 1,000 files | Cost / 10,000 files |",
               "|-------|-------------------:|--------------------:|"]
     for model, s in summary.items():
-        lines.append(f"| {model} | ${s['avg_cost']*1000:,.2f} | ${s['avg_cost']*10000:,.2f} |")
+        lines.append(f"| {model} | ${s['per_file']*1000:,.2f} | ${s['per_file']*10000:,.2f} |")
 
     if errs:
         lines += ["", "## Skipped / errors", ""]
